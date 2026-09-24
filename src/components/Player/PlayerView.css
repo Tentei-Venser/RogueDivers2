@@ -1,0 +1,137 @@
+#player {
+    display:flex;
+    border-top: 1px solid var(--border);
+    text-align: left;
+}
+
+.player-view {
+    display: grid;
+    grid-template-columns: max-content 1fr auto;
+    column-gap: 16px;
+    row-gap: 6px;
+    align-items: left;
+}
+
+.player-view h2 {
+    grid-column: 1 / -1;
+}
+
+.player-row{
+    display: contents;
+}
+
+.player-label{
+    color: var(--text);
+}
+
+.player-value{
+    color: var(--text-h);
+    font-weight: 500;
+}
+.death-button,
+.mission-button {
+    margin: 8px 8px 4px 0;
+    border-color: var(--accent-border);
+    color: var(--accent);
+}
+
+.mission-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mission-checklist label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.faction-tracker {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+    color: var(--text-h);
+}
+
+.milestone-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    margin: 12px 0;
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-border);
+    border-radius: 6px;
+    color: var(--text-h);
+}
+
+.mission-history {
+    margin: 12px 0;
+    color: var(--text-h);
+}
+
+.mission-history summary {
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.mission-history ul {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mission-history li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 14px;
+}
+
+.mission-success {
+    color: var(--accent);
+}
+
+.mission-failure {
+    color: var(--text);
+}
+
+.item-picker {
+    background: var(--bg);
+    color: var(--text-h);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    min-width: 280px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.item-picker::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.item-picker ul {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.item-picker li button {
+    width: 100%;
+    text-align: left;
+}
