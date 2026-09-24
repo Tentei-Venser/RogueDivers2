@@ -36,3 +36,4 @@ npm run build
 ## Credits
 
 Ruleset written by [LhilaKalkari](https://www.twitch.tv/lhilakalkari), with input from [Natureclaws](https://www.twitch.tv/natureclaws), edited by Karleen Winters, original concept by u/starfruit_eater.
+React app written by Tentei Venser, co-authored by Anthropic Claude
