@@ -23,7 +23,7 @@ export function MissionHistoryLog(props: MissionHistoryLogProps) {
                             <span>{mission.basesDestroyed ? "Bases ✓" : "Bases ✗"}</span>
                             <span>{mission.spinsEarned} spin{mission.spinsEarned !== 1 ? "s" : ""}</span>
                             <span className={mission.operationCompleted ? "mission-success" : "mission-failure"}>
-                                {mission.operationCompleted ? "Operation Completed" : "Operation Failed"}
+                                {mission.operationCompleted ? "Operation Completed" : "Operation Not Completed"}
                             </span>
                         </li>
                     ))}
