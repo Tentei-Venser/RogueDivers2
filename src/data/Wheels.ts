@@ -5,13 +5,14 @@ export interface Wheel {
     category: ItemCategory;
     requireKeyword?: Keyword;   // item must have this keyword to be in the pool
     excludeKeyword?: Keyword;   // item must NOT have this keyword to be in the pool
+    rollsPassive?: boolean;     // Armor Passives: roll a passive, then let the player pick which unlocked armor set has it
 }
 
 // The 7 wheels that pay out post-mission spins. "Stratagems" and "Support Items" are separate
 // wheels in the ruleset but share one internal ItemCategory now, so they're told apart by the
 // "support-weapon" keyword instead of by category.
 export const WHEELS: Wheel[] = [
-    { label: "Armor Passives", category: "armor" },
+    { label: "Armor Passives", category: "armor", rollsPassive: true },
     { label: "Boosters", category: "booster" },
     { label: "Grenades", category: "grenade" },
     { label: "Primary Weapons", category: "primary" },
@@ -62,4 +63,43 @@ export function rollWheel(wheel: Wheel, armory: ArmoryData, player: PlayerData):
     const pool = wheelPool(wheel, armory, player);
     if (pool.length === 0) return null;
     return pool[Math.floor(Math.random() * pool.length)];
+}
+
+const ARMOR_WEIGHT_KEYWORDS: Keyword[] = ["light-armor", "medium-armor", "heavy-armor"];
+
+// Every armor item carries exactly one weight keyword and one passive keyword - whichever
+// keyword isn't a weight class is the passive.
+function passiveOf(item: GameItem): Keyword | undefined {
+    return item.keywords?.find(k => !ARMOR_WEIGHT_KEYWORDS.includes(k));
+}
+
+// The Armor Passives wheel rolls a passive (not a specific armor set) - the pool is every
+// distinct passive represented among unlocked armor sets, excluding the passive currently
+// equipped (so a "duplicate" roll can't happen at the passive level either).
+export function armorPassivePool(armory: ArmoryData, player: PlayerData): Keyword[] {
+    const currentItem = armory.data.armor?.get(player.armor);
+    const currentPassive = currentItem ? passiveOf(currentItem) : undefined;
+
+    const passives = new Set<Keyword>();
+    for (const item of armory.data.armor?.values() ?? []) {
+        if (!item.available) continue;
+        const passive = passiveOf(item);
+        if (passive && passive !== currentPassive) passives.add(passive);
+    }
+    return Array.from(passives).sort();
+}
+
+export function rollArmorPassive(armory: ArmoryData, player: PlayerData): Keyword | null {
+    const pool = armorPassivePool(armory, player);
+    if (pool.length === 0) return null;
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Every unlocked armor set carrying the rolled passive - the player picks which one to equip.
+export function armorSetsWithPassive(armory: ArmoryData, passive: Keyword): GameItem[] {
+    const items: GameItem[] = [];
+    for (const item of armory.data.armor?.values() ?? []) {
+        if (item.available && passiveOf(item) === passive) items.push(item);
+    }
+    return items.sort((a, b) => a.name.localeCompare(b.name));
 }

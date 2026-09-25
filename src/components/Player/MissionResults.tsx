@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import type { ArmoryData, GameItem, MissionResult, PlayerData } from "../../types/Objects";
-import { WHEELS, WHEEL_FIELDS, rollWheel, wheelPool, type Wheel } from "../../data/Wheels";
+import type { ArmoryData, GameItem, Keyword, MissionResult, PlayerData } from "../../types/Objects";
+import { WHEELS, WHEEL_FIELDS, rollWheel, wheelPool, armorPassivePool, rollArmorPassive, armorSetsWithPassive, type Wheel } from "../../data/Wheels";
 import "./PlayerView.css"
 
 interface MissionResultsProps {
@@ -19,6 +19,7 @@ export function MissionResults(props: MissionResultsProps) {
     const [spinsRemaining, setSpinsRemaining] = useState(0);
     const [activeWheel, setActiveWheel] = useState<Wheel | null>(null);
     const [rolledItem, setRolledItem] = useState<GameItem | null>(null);
+    const [rolledPassive, setRolledPassive] = useState<Keyword | null>(null);
 
     function open() {
         setStep("form");
@@ -28,6 +29,7 @@ export function MissionResults(props: MissionResultsProps) {
         setOperationCompleted(false);
         setActiveWheel(null);
         setRolledItem(null);
+        setRolledPassive(null);
         dialogRef.current?.showModal();
     }
 
@@ -52,7 +54,13 @@ export function MissionResults(props: MissionResultsProps) {
 
     function pickWheel(wheel: Wheel) {
         setActiveWheel(wheel);
-        setRolledItem(rollWheel(wheel, props.armory, props.player));
+        if (wheel.rollsPassive) {
+            setRolledPassive(rollArmorPassive(props.armory, props.player));
+            setRolledItem(null);
+        } else {
+            setRolledItem(rollWheel(wheel, props.armory, props.player));
+            setRolledPassive(null);
+        }
     }
 
     function finishSpin(patch?: Partial<PlayerData>) {
@@ -60,6 +68,7 @@ export function MissionResults(props: MissionResultsProps) {
         setSpinsRemaining(prev => prev - 1);
         setActiveWheel(null);
         setRolledItem(null);
+        setRolledPassive(null);
     }
 
     return (
@@ -94,7 +103,9 @@ export function MissionResults(props: MissionResultsProps) {
                         <h3>{spinsRemaining} spin{spinsRemaining > 1 ? "s" : ""} remaining - pick a wheel</h3>
                         <ul>
                             {WHEELS.map(wheel => {
-                                const poolSize = wheelPool(wheel, props.armory, props.player).length;
+                                const poolSize = wheel.rollsPassive
+                                    ? armorPassivePool(props.armory, props.player).length
+                                    : wheelPool(wheel, props.armory, props.player).length;
                                 return (
                                     <li key={wheel.label}>
                                         <button disabled={poolSize === 0} onClick={() => pickWheel(wheel)}>
@@ -107,7 +118,32 @@ export function MissionResults(props: MissionResultsProps) {
                     </>
                 )}
 
-                {step === "spin" && activeWheel && (
+                {step === "spin" && activeWheel && activeWheel.rollsPassive && (
+                    <>
+                        <h3>{activeWheel.label}</h3>
+                        {rolledPassive ? (
+                            <>
+                                <p>Rolled passive: <strong>{rolledPassive}</strong></p>
+                                <p>Choose which unlocked armor set to equip:</p>
+                                <ul>
+                                    {armorSetsWithPassive(props.armory, rolledPassive).map(item => (
+                                        <li key={item.name}>
+                                            <button onClick={() => finishSpin({ armor: item.name })}>{item.name}</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <button onClick={() => finishSpin()}>Keep current gear</button>
+                            </>
+                        ) : (
+                            <>
+                                <p>No new result here - everything eligible is already equipped or unavailable.</p>
+                                <button onClick={() => finishSpin()}>Keep current gear</button>
+                            </>
+                        )}
+                    </>
+                )}
+
+                {step === "spin" && activeWheel && !activeWheel.rollsPassive && (
                     <>
                         <h3>{activeWheel.label}</h3>
                         {rolledItem ? (
