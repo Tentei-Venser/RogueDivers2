@@ -13,7 +13,8 @@ const Categories: {key: ItemCategory, label: string}[] = [
 interface ArmoryViewProps {
     armory: ArmoryData,
     onToggle: (category: ItemCategory, name: string) => void,
-    onRefresh: () => void
+    onRefresh: () => void,
+    onSelectAll: () => void
 }
 
 export function ArmoryView(props:ArmoryViewProps){
@@ -23,6 +24,9 @@ export function ArmoryView(props:ArmoryViewProps){
                 <h2>Armory</h2>
                 <button className="armory-refresh" onClick={props.onRefresh}>
                     Refresh Catalog (new Warbond?)
+                </button>
+                <button className="select-all" onClick={props.onSelectAll}>
+                    Check All
                 </button>
                 {Categories.map(category => {
                     const items = Array.from(props.armory.data[category.key]?.values() ?? [])

@@ -21,7 +21,10 @@ function App() {
             {(armory.status === "fresh" || armory.status === "cached") 
                 && <>
                     <PlayerSection armory={armory.armory} />
-                    <ArmoryView armory={armory.armory} onToggle={armory.toggleItemAvailable} onRefresh={armory.refreshArmory} />
+                    <ArmoryView armory={armory.armory} 
+                        onToggle={armory.toggleItemAvailable} 
+                        onRefresh={armory.refreshArmory} 
+                        onSelectAll={armory.selectAllItems}/>
                 </>
             }
         </div>
