@@ -71,7 +71,10 @@ export type Keyword =
     | "light-armor-penetrating"
     | "medium-armor-penetrating"
     | "heavy-armor-penetrating"
-    | "booster";
+    | "booster"
+    | "offensive"
+    | "defensive"
+    | "supply";
     
 export type PlayerStatus = "loading"
     | "ready"

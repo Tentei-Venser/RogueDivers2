@@ -55,10 +55,6 @@ export function MissionResults(props: MissionResultsProps) {
         setRolledItem(rollWheel(wheel, props.armory, props.player));
     }
 
-    function reroll() {
-        if (activeWheel) setRolledItem(rollWheel(activeWheel, props.armory, props.player));
-    }
-
     function finishSpin(patch?: Partial<PlayerData>) {
         if (patch) props.onUpdate(patch);
         setSpinsRemaining(prev => prev - 1);
@@ -126,7 +122,6 @@ export function MissionResults(props: MissionResultsProps) {
                                         </li>
                                     ))}
                                 </ul>
-                                <button onClick={reroll}>Reroll</button>
                                 <button onClick={() => finishSpin()}>Keep current gear</button>
                             </>
                         ) : (

@@ -4,14 +4,7 @@
     text-align: left;
 }
 
-.armory-refresh {
-    margin: 8px 0 12px;
-    border-color: var(--accent-border);
-    color: var(--accent);
-}
-
+.armory-refresh,
 .select-all {
-    margin: 8px 0 12px;
-    border-color: var(--accent-border);
-    color: var(--accent);
+    margin: 8px 8px 12px 0;
 }

@@ -24,7 +24,8 @@ function App() {
                     <ArmoryView armory={armory.armory} 
                         onToggle={armory.toggleItemAvailable} 
                         onRefresh={armory.refreshArmory} 
-                        onSelectAll={armory.selectAllItems}/>
+                        onSelectAll={armory.selectAllItems}
+                        onDeselectAll={armory.deselectAllItems}/>
                 </>
             }
         </div>

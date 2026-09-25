@@ -31,8 +31,6 @@
 .death-button,
 .mission-button {
     margin: 8px 8px 4px 0;
-    border-color: var(--accent-border);
-    color: var(--accent);
 }
 
 .mission-checklist {

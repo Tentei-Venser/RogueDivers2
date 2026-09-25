@@ -14,7 +14,8 @@ interface ArmoryViewProps {
     armory: ArmoryData,
     onToggle: (category: ItemCategory, name: string) => void,
     onRefresh: () => void,
-    onSelectAll: () => void
+    onSelectAll: () => void,
+    onDeselectAll: () => void
 }
 
 export function ArmoryView(props:ArmoryViewProps){
@@ -27,6 +28,9 @@ export function ArmoryView(props:ArmoryViewProps){
                 </button>
                 <button className="select-all" onClick={props.onSelectAll}>
                     Check All
+                </button>
+                <button className="select-all" onClick={props.onDeselectAll}>
+                    Uncheck All
                 </button>
                 {Categories.map(category => {
                     const items = Array.from(props.armory.data[category.key]?.values() ?? [])

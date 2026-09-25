@@ -16,8 +16,9 @@ export const WHEELS: Wheel[] = [
     { label: "Grenades", category: "grenade" },
     { label: "Primary Weapons", category: "primary" },
     { label: "Secondary Weapons", category: "secondary" },
-    { label: "Stratagems", category: "stratagem", excludeKeyword: "support-weapon" },
-    { label: "Support Items", category: "stratagem", requireKeyword: "support-weapon" },
+    { label: "Stratagems [Offensive]", category: "stratagem", requireKeyword: "offensive" },
+    { label: "Stratagems [Defensive]", category: "stratagem", requireKeyword: "defensive" },
+    { label: "Stratagems [Support]", category: "stratagem", requireKeyword: "supply" },
 ];
 
 // Which PlayerData field(s) a wheel's category can land in - a single fixed slot for most

@@ -178,11 +178,35 @@ export function useArmory() {
         })
     }
 
+    function deselectAllItems(){
+        setArmory(prev => {
+            const nextData = {} as Record<ItemCategory, Map<string, GameItem>>;
+
+            for (const [category, itemMap] of Object.entries(prev.data) as [ItemCategory, Map<string, GameItem>][]) {
+                const updatedCategory = new Map(itemMap);
+                for (const [itemName, item] of itemMap) {
+                    if (item.locked) continue; // never touch locked starting gear
+                    updatedCategory.set(itemName, {...item, available: false});
+                }
+                nextData[category] = updatedCategory;
+            }
+
+            const next: ArmoryData = {
+                dataTimeStamp: prev.dataTimeStamp,
+                data: nextData
+            };
+
+            localStorage.setItem(CACHE_KEY, JSON.stringify(buildArmoryCache(next)));
+            return next;
+        })
+    }
+
     return {
         armory,
         status,
         toggleItemAvailable,
         refreshArmory,
-        selectAllItems
+        selectAllItems,
+        deselectAllItems
     };
 }
