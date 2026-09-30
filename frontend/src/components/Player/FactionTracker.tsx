@@ -1,5 +1,5 @@
 import type { PlayerData } from "../../types/Objects";
-import { rollFaction, isFactionRerollDue, highestFactionRerollThreshold } from "../../data/Factions";
+import { rollFaction, isFactionRerollDue } from "../../data/Factions";
 import "./PlayerView.css"
 
 interface FactionTrackerProps {
@@ -10,10 +10,10 @@ interface FactionTrackerProps {
 export function FactionTracker(props: FactionTrackerProps) {
     const due = isFactionRerollDue(props.player);
 
-    function roll() {
+    async function roll() {
         props.onUpdate({
-            faction: rollFaction(),
-            factionRerollLevel: Math.max(props.player.factionRerollLevel, highestFactionRerollThreshold(props.player.level)),
+            faction: await rollFaction(),
+            factionRerollLevel: Math.max(props.player.factionRerollLevel, props.player.level),
         });
     }
 

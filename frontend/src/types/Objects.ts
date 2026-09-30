@@ -161,7 +161,7 @@ export interface ArmoryData {
 export interface PlayerData {
     level: number,
     faction: string,
-    factionRerollLevel: number,     // the highest difficulty threshold (4 or 7) a Faction reroll has already been done for
+    factionRerollLevel: number,     // the highest level a Faction reroll has already been done for
     primary: string,
     secondary: string,
     grenade: string,
@@ -187,4 +187,8 @@ export interface Armory {
     status: ArmoryStatus,
     toggleItemAvailable: (category:ItemCategory, name: string) => void,
     refreshArmory: () => void
+}
+
+export interface Faction{
+    faction: string
 }
