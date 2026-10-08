@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { ArmoryData, PlayerData, LoadoutPackage, GrantValue } from "../../types/Objects";
 import { SPECIALIZATIONS } from "../../data/Specializations";
 import { REQUISITIONS } from "../../data/Requisitions";
-import { isSpecializationDue, requisitionPicksDue, isPackageAvailable, resolveGrantOptions, rollFieldValue } from "../../data/Milestones";
+import { isSpecializationDue, requisitionPicksDue, isPackageAvailable, resolveGrantOptions, rollFieldValue, describePackageKeywordFilters } from "../../data/Milestones";
+import { formatArmorName } from "../../data/Armory";
 import "./PlayerView.css"
 
 interface MilestonePickerProps {
@@ -49,10 +50,14 @@ export function MilestonePicker(props: MilestonePickerProps) {
     useEffect(() => {
         if (!chosenPackage || pendingFields.length > 0) return;
 
+        const selectedPackage = {
+            ...chosenPackage,
+            resolvedGrants: patch as Partial<Record<keyof PlayerData, string>>,
+        };
         props.onUpdate(
             chosenKind === "specialization"
-                ? { ...patch, specialization: chosenPackage }
-                : { ...patch, requisitions: [...props.player.requisitions, chosenPackage] }
+                ? { ...patch, specialization: selectedPackage }
+                : { ...patch, requisitions: [...props.player.requisitions, selectedPackage] }
         );
         setChosenPackage(null);
         setChosenKind(null);
@@ -95,7 +100,11 @@ export function MilestonePicker(props: MilestonePickerProps) {
     }
 
     const table = pendingKind === "specialization" ? SPECIALIZATIONS : REQUISITIONS;
-    const eligible = pendingKind ? table.filter(pkg => isPackageAvailable(pkg, props.armory)) : [];
+    const hasUnusedPhoenixDown = props.player.requisitions.some(pkg => pkg.id === "phoenix-down" && !pkg.used);
+    const eligible = pendingKind ? table.filter(pkg =>
+        isPackageAvailable(pkg, props.armory)
+        && !(pendingKind === "requisition" && pkg.id === "phoenix-down" && hasUnusedPhoenixDown)
+    ) : [];
 
     return (
         <>
@@ -106,17 +115,54 @@ export function MilestonePicker(props: MilestonePickerProps) {
                 </div>
             )}
 
-            <dialog ref={packageDialogRef} className="item-picker" onClose={() => setDialogOpen(false)}>
+            <dialog
+                ref={packageDialogRef}
+                className="item-picker package-picker"
+                onClose={() => setDialogOpen(false)}>
                 <h3>Choose a {pendingKind === "specialization" ? "Specialization" : "Requisition"}</h3>
                 <ul>
                     {eligible.map(pkg => (
                         <li key={pkg.id}>
-                            <button onClick={() => choosePackage(pendingKind!, pkg)}>{pkg.name}</button>
+                            <button
+                                className="package-option package-choice"
+                                onClick={() => choosePackage(pendingKind!, pkg)}>
+                                <strong>{pkg.name}</strong>
+                                <span className="package-filter-list">
+                                    {describePackageKeywordFilters(pkg, props.armory).map(filter => (
+                                        <span className="package-filter" key={filter.field}>
+                                            <strong>{filter.field}</strong>
+                                            <span>
+                                                {filter.itemName ? (
+                                                    <strong className="package-item-grant">
+                                                        {filter.field === "Armor"
+                                                            ? formatArmorName(filter.itemName, props.armory)
+                                                            : filter.itemName}
+                                                    </strong>
+                                                ) : filter.keywords.length > 0 ? (
+                                                    <>
+                                                        <span className="filter-match">
+                                                            {filter.match === "All" ? "Select one matching all" : "Select any one"}
+                                                        </span>{" "}
+                                                        <strong className="package-keywords">
+                                                            [{filter.keywords.join(" · ")}]
+                                                        </strong>
+                                                    </>
+                                                ) : filter.emptyText}
+                                            </span>
+                                        </span>
+                                    ))}
+                                    {pkg.restricts && (
+                                        <span className="package-restriction">Restriction: {pkg.restricts}</span>
+                                    )}
+                                </span>
+                            </button>
                         </li>
                     ))}
                 </ul>
                 {eligible.length === 0 && pendingKind && (
-                    <p>No {pendingKind}s are currently unlockable - check off more gear in the Armory first.</p>
+                    <p>{pendingKind === "requisition" && hasUnusedPhoenixDown
+                        ? "No other Requisitions are currently unlockable. Mark your active Phoenix Down Used before taking it again, or check off more gear in the Armory."
+                        : `No ${pendingKind}s are currently unlockable - check off more gear in the Armory first.`}</p>
                 )}
                 <button onClick={() => packageDialogRef.current?.close()}>Not right now</button>
             </dialog>
@@ -126,7 +172,9 @@ export function MilestonePicker(props: MilestonePickerProps) {
                 <ul>
                     {pendingFields[0] && resolveGrantOptions(pendingFields[0][1], props.armory, pendingFields[0][0]).map(value => (
                         <li key={value}>
-                            <button onClick={() => chooseFieldValue(value)}>{value}</button>
+                            <button onClick={() => chooseFieldValue(value)}>
+                                {pendingFields[0][0] === "armor" ? formatArmorName(value, props.armory) : value}
+                            </button>
                         </li>
                     ))}
                 </ul>

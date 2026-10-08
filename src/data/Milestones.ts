@@ -1,4 +1,5 @@
 import type { ArmoryData, ItemCategory, Keyword, LoadoutPackage, GrantValue, PlayerData } from "../types/Objects";
+import { formatArmorName } from "./Armory";
 import { TEAM_MILESTONES } from "./TeamMilestones";
 
 export function currentMilestone(level: number) {
@@ -80,6 +81,109 @@ export function resolveGrantOptions(value: GrantValue, armory: ArmoryData, field
 export function isPackageAvailable(pkg: LoadoutPackage, armory: ArmoryData): boolean {
     return (Object.entries(pkg.grants) as [keyof PlayerData, GrantValue][])
         .every(([field, value]) => resolveGrantOptions(value, armory, field).length > 0);
+}
+
+function packageFieldLabel(field: keyof PlayerData): string {
+    if (field.startsWith("stratagem")) return `Stratagem ${field.slice("stratagem".length)}`;
+    const labels: Partial<Record<keyof PlayerData, string>> = {
+        primary: "Primary",
+        secondary: "Secondary",
+        grenade: "Grenade",
+        armor: "Armor",
+        booster: "Booster",
+    };
+    return labels[field] ?? field;
+}
+
+function formatKeyword(keyword: string): string {
+    return keyword.split("-").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+}
+
+export interface PackageKeywordFilter {
+    field: string;
+    keywords: string[];
+    itemName?: string;
+    match?: "Any" | "All";
+    emptyText?: string;
+}
+
+export function describePackageKeywordFilters(pkg: LoadoutPackage, armory: ArmoryData): PackageKeywordFilter[] {
+    const filters: PackageKeywordFilter[] = (Object.entries(pkg.grants) as [keyof PlayerData, GrantValue][]).map(([field, value]) => {
+        const categories = FIELD_CATEGORIES[field] ?? [];
+        const keywordsForItem = (name: string) => categories
+            .flatMap(category => armory.data[category]?.get(name)?.keywords ?? []);
+
+        if (Array.isArray(value)) {
+            const keywords = Array.from(new Set(value.flatMap(keywordsForItem).map(formatKeyword)));
+            return {
+                field: packageFieldLabel(field),
+                keywords,
+                match: "Any",
+                emptyText: keywords.length ? undefined : `${value.length} item alternatives`,
+            };
+        }
+
+        if (typeof value === "object") {
+            return {
+                field: packageFieldLabel(field),
+                keywords: value.keywords.map(formatKeyword),
+                match: value.filterMode === "AND" ? "All" : "Any",
+            };
+        }
+
+        const isItemName = categories.some(category => armory.data[category]?.has(value));
+        if (isItemName) {
+            return {
+                field: packageFieldLabel(field),
+                keywords: [],
+                itemName: value,
+            };
+        }
+
+        return {
+            field: packageFieldLabel(field),
+            keywords: [formatKeyword(value as Keyword)],
+        };
+    });
+
+    if (pkg.reroll?.length) {
+        filters.push({
+            field: "Reroll",
+            keywords: [],
+            emptyText: pkg.reroll.map(packageFieldLabel).join(" · "),
+        });
+    }
+
+    return filters;
+}
+
+export function describePackageEffects(pkg: LoadoutPackage, armory: ArmoryData): string[] {
+    const resolved = pkg.resolvedGrants && Object.keys(pkg.resolvedGrants).length > 0;
+    const grants = resolved
+        ? Object.entries(pkg.resolvedGrants!).map(([field, value]) => [field, value] as [keyof PlayerData, GrantValue])
+        : Object.entries(pkg.grants) as [keyof PlayerData, GrantValue][];
+    const effects = grants.map(([field, value]) => {
+        const label = packageFieldLabel(field);
+        const formatOption = (name: string) => field === "armor" ? formatArmorName(name, armory) : name;
+        if (resolved) return `${label}: ${formatOption(String(value))}.`;
+        const options = resolveGrantOptions(value, armory, field);
+        if (options.length === 1) return `${label}: ${formatOption(options[0])}.`;
+        if (options.length > 1) return `${label}: Choose one of ${options.map(formatOption).join(", ")}.`;
+        if (Array.isArray(value)) return `${label}: Choose one of ${value.map(formatOption).join(", ")}.`;
+        if (typeof value === "object") {
+            const keywords = value.keywords.map(formatKeyword).join(", ");
+            const matcher = value.filterMode === "AND" ? "all" : "any";
+            return `${label}: Choose an unlocked item with ${matcher} of these keywords: ${keywords}.`;
+        }
+
+        return `${label}: Choose an unlocked item with the ${formatKeyword(value)} keyword.`;
+    });
+
+    if (pkg.reroll?.length) {
+        effects.push(`Rerolls: ${pkg.reroll.map(packageFieldLabel).join(", ")}.`);
+    }
+    if (pkg.restricts) effects.push(`Restriction: ${pkg.restricts}`);
+    return effects;
 }
 
 // Currently-equipped values a rolled result for this field must not duplicate - just the field's

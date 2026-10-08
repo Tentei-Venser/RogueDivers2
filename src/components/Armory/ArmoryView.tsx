@@ -1,4 +1,5 @@
 import type { ArmoryData, ItemCategory } from "../../types/Objects";
+import { formatArmorName } from "../../data/Armory";
 import "./ArmoryView.css"
 
 const Categories: {key: ItemCategory, label: string}[] = [
@@ -51,7 +52,7 @@ export function ArmoryView(props:ArmoryViewProps){
                                                             disabled={item.locked}
                                                             onChange={() => props.onToggle(category.key, item.name)}
                                                         />
-                                                        {item.name}
+                                                        {category.key === "armor" ? formatArmorName(item.name, props.armory) : item.name}
                                                     </label>
                                             </li>
                                         ))

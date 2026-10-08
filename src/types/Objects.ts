@@ -106,6 +106,8 @@ export interface LoadoutPackage {
     id: string;                                             // Unique identifier
     name: string;                                           // Full name of the package
     grants: Partial<Record<keyof PlayerData, GrantValue>>;  // Description of what the package gives the Diver.
+    resolvedGrants?: Partial<Record<keyof PlayerData, string>>; // Concrete results selected or rerolled from the grants.
+    used?: boolean;                                         // Tracks a spent one-time requisition.
     reroll?: (keyof PlayerData)[];                          // Fields randomly rerolled from unlocked gear, no player choice - "take what you get".
     restricts?: string                                      // Description of anything the package restricts for the Diver.
 }

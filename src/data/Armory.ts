@@ -1,4 +1,4 @@
-import type { ArmoryStatus, ArmoryData, ArmoryCache, ItemCategory, GameItem } from "../types/Objects"
+import type { ArmoryStatus, ArmoryData, ArmoryCache, ItemCategory, GameItem, Keyword } from "../types/Objects"
 import { newGameItem } from "../types/Objects"
 import { useState, useEffect } from "react"
 import { PopulateArmoryCache } from "./ArmoryBackup"
@@ -10,6 +10,32 @@ const CACHE_TTL =
     * 60    // 60 m
     * 24    // 24 h
     * 1     //  1 d
+
+export function formatArmorPassive(passive: Keyword): string {
+    return passive
+        .split("-")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+}
+
+export function formatArmorName(name: string, armory: ArmoryData): string {
+    const keywords = formatArmorKeywords(name, armory);
+    return keywords.length ? `${name} [${keywords.join(", ")}]` : name;
+}
+
+export function formatArmorKeywords(name: string, armory: ArmoryData): string[] {
+    const keywords = armory.data.armor?.get(name)?.keywords ?? [];
+    const weightLabels: Record<string, string> = {
+        "light-armor": "Light",
+        "medium-armor": "Medium",
+        "heavy-armor": "Heavy",
+    };
+    const weightKeyword = keywords.find(keyword => weightLabels[keyword]);
+    const weight = weightKeyword ? weightLabels[weightKeyword] : null;
+    const passiveKeyword = keywords.find(keyword => !weightLabels[keyword]);
+    const passive = passiveKeyword ? formatArmorPassive(passiveKeyword) : null;
+    return [weight, passive].filter((keyword): keyword is string => !!keyword);
+}
 
 
 // receive cached data and organize for easier UI usage.

@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type { ArmoryData, GameItem, Keyword, MissionResult, PlayerData } from "../../types/Objects";
 import { WHEELS, WHEEL_FIELDS, rollWheel, wheelPool, armorPassivePool, rollArmorPassive, armorSetsWithPassive, type Wheel } from "../../data/Wheels";
+import { formatArmorName, formatArmorPassive } from "../../data/Armory";
 import "./PlayerView.css"
 
 interface MissionResultsProps {
@@ -20,6 +21,9 @@ export function MissionResults(props: MissionResultsProps) {
     const [activeWheel, setActiveWheel] = useState<Wheel | null>(null);
     const [rolledItem, setRolledItem] = useState<GameItem | null>(null);
     const [rolledPassive, setRolledPassive] = useState<Keyword | null>(null);
+    const [pendingMission, setPendingMission] = useState<MissionResult | null>(null);
+    const [pendingLoadout, setPendingLoadout] = useState<Partial<PlayerData>>({});
+    const lootPlayer = { ...props.player, ...pendingLoadout };
 
     function open() {
         setStep("form");
@@ -27,10 +31,32 @@ export function MissionResults(props: MissionResultsProps) {
         setSecondariesCompleted(false);
         setBasesDestroyed(false);
         setOperationCompleted(false);
+        setSpinsRemaining(0);
         setActiveWheel(null);
         setRolledItem(null);
         setRolledPassive(null);
+        setPendingMission(null);
+        setPendingLoadout({});
         dialogRef.current?.showModal();
+    }
+
+    function commitMission(result: MissionResult, loadout: Partial<PlayerData> = {}) {
+        props.onUpdate({
+            ...loadout,
+            level: result.operationCompleted ? Math.min(10, result.difficulty + 1) : result.difficulty,
+            missionHistory: [...props.player.missionHistory, result],
+        });
+    }
+
+    function cancelLootDrops() {
+        setPendingMission(null);
+        setPendingLoadout({});
+        setSpinsRemaining(0);
+        setActiveWheel(null);
+        setRolledItem(null);
+        setRolledPassive(null);
+        setStep("form");
+        dialogRef.current?.close();
     }
 
     function submit() {
@@ -45,37 +71,39 @@ export function MissionResults(props: MissionResultsProps) {
         };
 
         setSpinsRemaining(spins);
-        props.onUpdate({
-            level: operationCompleted ? Math.min(10, props.player.level + 1) : props.player.level,
-            missionHistory: [...props.player.missionHistory, result],
-        });
+        setPendingMission(result);
+        setPendingLoadout({});
+        if (spins === 0) commitMission(result);
         setStep("spin");
     }
 
     function pickWheel(wheel: Wheel) {
         setActiveWheel(wheel);
         if (wheel.rollsPassive) {
-            setRolledPassive(rollArmorPassive(props.armory, props.player));
+            setRolledPassive(rollArmorPassive(props.armory, lootPlayer));
             setRolledItem(null);
         } else {
-            setRolledItem(rollWheel(wheel, props.armory, props.player));
+            setRolledItem(rollWheel(wheel, props.armory, lootPlayer));
             setRolledPassive(null);
         }
     }
 
     function finishSpin(patch?: Partial<PlayerData>) {
-        if (patch) props.onUpdate(patch);
-        setSpinsRemaining(prev => prev - 1);
+        const updatedLoadout = patch ? { ...pendingLoadout, ...patch } : pendingLoadout;
+        const remaining = spinsRemaining - 1;
+        setPendingLoadout(updatedLoadout);
+        setSpinsRemaining(remaining);
         setActiveWheel(null);
         setRolledItem(null);
         setRolledPassive(null);
+        if (remaining === 0 && pendingMission) commitMission(pendingMission, updatedLoadout);
     }
 
     return (
         <>
             <button className="mission-button" onClick={open}>Log Mission Result</button>
 
-            <dialog ref={dialogRef} className="item-picker">
+            <dialog ref={dialogRef} className="item-picker mission-results-dialog">
                 {step === "form" && (
                     <>
                         <h3>Mission Result</h3>
@@ -104,8 +132,8 @@ export function MissionResults(props: MissionResultsProps) {
                         <ul>
                             {WHEELS.map(wheel => {
                                 const poolSize = wheel.rollsPassive
-                                    ? armorPassivePool(props.armory, props.player).length
-                                    : wheelPool(wheel, props.armory, props.player).length;
+                                    ? armorPassivePool(props.armory, lootPlayer).length
+                                    : wheelPool(wheel, props.armory, lootPlayer).length;
                                 return (
                                     <li key={wheel.label}>
                                         <button disabled={poolSize === 0} onClick={() => pickWheel(wheel)}>
@@ -115,6 +143,7 @@ export function MissionResults(props: MissionResultsProps) {
                                 );
                             })}
                         </ul>
+                        <button onClick={cancelLootDrops}>Cancel</button>
                     </>
                 )}
 
@@ -123,12 +152,16 @@ export function MissionResults(props: MissionResultsProps) {
                         <h3>{activeWheel.label}</h3>
                         {rolledPassive ? (
                             <>
-                                <p>Rolled passive: <strong>{rolledPassive}</strong></p>
+                                <p className="milestone-banner loot-result-banner">
+                                    Rolled passive: <strong>{formatArmorPassive(rolledPassive)}</strong>
+                                </p>
                                 <p>Choose which unlocked armor set to equip:</p>
                                 <ul>
                                     {armorSetsWithPassive(props.armory, rolledPassive).map(item => (
                                         <li key={item.name}>
-                                            <button onClick={() => finishSpin({ armor: item.name })}>{item.name}</button>
+                                            <button onClick={() => finishSpin({ armor: item.name })}>
+                                                {formatArmorName(item.name, props.armory)}
+                                            </button>
                                         </li>
                                     ))}
                                 </ul>
@@ -148,15 +181,22 @@ export function MissionResults(props: MissionResultsProps) {
                         <h3>{activeWheel.label}</h3>
                         {rolledItem ? (
                             <>
-                                <p>Rolled: <strong>{rolledItem.name}</strong></p>
+                                <p className="milestone-banner loot-result-banner">Rolled: <strong>
+                                    {activeWheel.category === "armor"
+                                        ? formatArmorName(rolledItem.name, props.armory)
+                                        : rolledItem.name}
+                                </strong></p>
                                 <ul>
-                                    {WHEEL_FIELDS[activeWheel.category].map(field => (
-                                        <li key={field}>
-                                            <button onClick={() => finishSpin({ [field]: rolledItem.name })}>
-                                                Equip as {field} (currently: {String(props.player[field]) || "-"})
-                                            </button>
-                                        </li>
-                                    ))}
+                                    {WHEEL_FIELDS[activeWheel.category].map(field => {
+                                        const currentItem = String(lootPlayer[field]) || "-";
+                                        return (
+                                            <li key={field}>
+                                                <button onClick={() => finishSpin({ [field]: rolledItem.name })}>
+                                                    Equip as {field} (currently: {currentItem})
+                                                </button>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                                 <button onClick={() => finishSpin()}>Keep current gear</button>
                             </>

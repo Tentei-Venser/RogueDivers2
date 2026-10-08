@@ -70,7 +70,7 @@ export const REQUISITIONS: LoadoutPackage[] = [
 
     { id: "phoenix-down", name: "Phoenix Down",
       grants: {},
-      restricts: "Grants one use of Reinforcement Call-In per mission (no permadeath consequence for the squad). Only the Diver holding this may use it, and only one Diver may hold it at a time. Not an equipment grant - not modeled." },
+      restricts: "Grants one use of Reinforcement Call-In, bypassing permanent consequences for that Diver. Only the Diver holding this Requisition may use the stratagem, and only one Diver may hold it at a time." },
 
     { id: "reloading-is-a-skill-issue", name: "Reloading is a Skill Issue",
       grants: { primary: "LAS-13 Trident", stratagem1: "LAS-98 Laser Cannon" } },
@@ -86,7 +86,6 @@ export const REQUISITIONS: LoadoutPackage[] = [
 
     { id: "snacks-for-days", name: "Snacks for Days",
       grants: { stratagem1: "M-103 Supply FRV", stratagem2: "B-1 Supply Pack" } },
-      // PDF says "B-1 Supply FRV" - no such item exists; treated as a typo for "B-1 Supply Pack"
 
     { id: "social-distancing", name: "Social Distancing",
       grants: { stratagem1: "Orbital Gas Strike", stratagem2: "A/ARC-3 Tesla Tower" } },
