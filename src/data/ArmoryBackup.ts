@@ -138,6 +138,7 @@ export function PopulateArmoryCache() {
                 newGameItem("LAS-13 Trident"),
                 newGameItem("LAS-16 Sickle"),
                 newGameItem("LAS-17 Double-Edge Sickle"),
+                newGameItem("LAS-4 Sai"),
                 newGameItem("LAS-5 Scythe"),
                 newGameItem("M7S SMG", ["suppressed"]),
                 newGameItem("M90A Shotgun", ["rounds-reload"]),
