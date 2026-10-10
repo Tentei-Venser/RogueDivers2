@@ -19,7 +19,7 @@ export function FactionTracker(props: FactionTrackerProps) {
     return (
         <>
             <span className="faction-label">Faction: <strong>{props.player.faction || "Not yet rolled"}</strong></span>
-            <button className="faction-action" onClick={roll}>{props.player.faction ? "Reroll Faction" : "Roll Faction"}</button>
+            <button className="starting-armor-button" onClick={roll}>{props.player.faction ? "Reroll Faction" : "Roll Faction"}</button>
         </>
     );
 }

@@ -24,13 +24,13 @@ export function ArmoryView(props:ArmoryViewProps){
         <section id="armory">
             <div className="armory-view">
                 <h2>Armory</h2>
-                <button className="armory-refresh" onClick={props.onRefresh}>
+                <button className="starting-armor-button" onClick={props.onRefresh}>
                     Refresh Catalog (new Warbond?)
                 </button>
-                <button className="select-all" onClick={props.onSelectAll}>
+                <button className="starting-armor-button" onClick={props.onSelectAll}>
                     Check All
                 </button>
-                <button className="select-all" onClick={props.onDeselectAll}>
+                <button className="starting-armor-button" onClick={props.onDeselectAll}>
                     Uncheck All
                 </button>
                 {Categories.map(category => {

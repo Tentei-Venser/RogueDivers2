@@ -35,15 +35,15 @@ export function DeathFlow(props: DeathFlowProps) {
 
     return (
         <>
-            <button className="death-button" onClick={open}>My Diver Died</button>
+            <button className="starting-armor-button" onClick={open}>My Diver Died</button>
 
             <dialog ref={dialogRef} className="item-picker" onClose={() => setStep("outcome")}>
                 {step === "outcome" && (
                     <>
                         <h3>Did the squad complete the mission and extract without you?</h3>
                         <ul>
-                            <li><button onClick={() => setStep("difficulty")}>Yes - squad extracted</button></li>
-                            <li><button onClick={squadWiped}>No - squad was wiped</button></li>
+                            <li><button className="starting-armor-button" onClick={() => setStep("difficulty")}>Yes - squad extracted</button></li>
+                            <li><button className="starting-armor-button" onClick={squadWiped}>No - squad was wiped</button></li>
                         </ul>
                     </>
                 )}
@@ -52,12 +52,12 @@ export function DeathFlow(props: DeathFlowProps) {
                         <h3>What difficulty is the squad currently at?</h3>
                         <ul>
                             {DIFFICULTIES.map(d => (
-                                <li key={d}><button onClick={() => squadExtracted(Number(d))}>{d}</button></li>
+                                <li key={d}><button className="starting-armor-button" onClick={() => squadExtracted(Number(d))}>{d}</button></li>
                             ))}
                         </ul>
                     </>
                 )}
-                <button onClick={() => dialogRef.current?.close()}>Cancel</button>
+                <button className="starting-armor-button" onClick={() => dialogRef.current?.close()}>Cancel</button>
             </dialog>
         </>
     );

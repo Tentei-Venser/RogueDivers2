@@ -182,7 +182,6 @@
 }
 
 .starting-armor-button {
-    max-width: 160px;
     padding: 6px 10px;
     background: var(--accent-bg);
     border-color: var(--accent-border);

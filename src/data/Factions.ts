@@ -10,8 +10,7 @@ export const FACTIONS = [
     "Illuminate", 
     "Illuminate - Appropriators", 
     "Illuminate - Vote Snatchers", 
-    "Illuminate - Mindless Masses", 
-    "Illuminate - Invasion Fleet"
+    "Illuminate - Mindless Masses",
 ];
 
 export function rollFaction(): string {

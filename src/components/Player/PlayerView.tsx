@@ -132,7 +132,7 @@ export function PlayerView(props:PlayerViewProps){
                                         Select Starting Armor
                                     </button>
                                 ) : (
-                                    <button onClick={() => openPicker(row)}>Change</button>
+                                    <button className="starting-armor-button" onClick={() => openPicker(row)}>Change</button>
                                 )}
                             </span>
                         </div>
@@ -187,7 +187,7 @@ export function PlayerView(props:PlayerViewProps){
                     {activeRow && activeRow.getOptions(props.armory).map(value => 
                         (
                             <li key={value}>
-                                <button onClick={() => selectValue(value)}>
+                                <button className="starting-armor-button" onClick={() => selectValue(value)}>
                                     {activeRow.label === "armor" || activeRow.label === "Starting Armor"
                                         ? formatArmorName(value, props.armory)
                                         : value}
@@ -199,7 +199,7 @@ export function PlayerView(props:PlayerViewProps){
                 {activeRow?.label === "Starting Armor" && activeRow.getOptions(props.armory).length === 0 && (
                     <p>No unlocked medium armor with Extra Padding is available.</p>
                 )}
-                <button onClick={() => dialogRef.current?.close()}>Cancel</button>
+                <button className="starting-armor-button" onClick={() => dialogRef.current?.close()}>Cancel</button>
             </dialog>
         </section>
     )

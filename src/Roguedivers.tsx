@@ -54,7 +54,7 @@ function BuildInfo() {
     return (
         <footer className="build-info">
             <span>{versionInfo}</span>
-            <button type="button" onClick={copyVersionInfo}>Copy version info</button>
+            <button className="starting-armor-button" type="button" onClick={copyVersionInfo}>Copy version info</button>
             <span className="build-info-status" aria-live="polite">{copied ? "Copied" : ""}</span>
         </footer>
     )

@@ -40,12 +40,21 @@ export function MissionResults(props: MissionResultsProps) {
         dialogRef.current?.showModal();
     }
 
-    function commitMission(result: MissionResult, loadout: Partial<PlayerData> = {}) {
-        props.onUpdate({
-            ...loadout,
-            level: result.operationCompleted ? Math.min(10, result.difficulty + 1) : result.difficulty,
-            missionHistory: [...props.player.missionHistory, result],
-        });
+    function nextLevel(result: MissionResult) {
+        return result.operationCompleted ? Math.min(10, result.difficulty + 1) : result.difficulty;
+    }
+
+    // The mission and every loot pick stay staged until the player accepts the summary screen -
+    // cancelling or escaping out at any step leaves the player untouched.
+    function acceptMission() {
+        if (pendingMission) {
+            props.onUpdate({
+                ...pendingLoadout,
+                level: nextLevel(pendingMission),
+                missionHistory: [...props.player.missionHistory, pendingMission],
+            });
+        }
+        dialogRef.current?.close();
     }
 
     function cancelLootDrops() {
@@ -73,7 +82,6 @@ export function MissionResults(props: MissionResultsProps) {
         setSpinsRemaining(spins);
         setPendingMission(result);
         setPendingLoadout({});
-        if (spins === 0) commitMission(result);
         setStep("spin");
     }
 
@@ -90,18 +98,16 @@ export function MissionResults(props: MissionResultsProps) {
 
     function finishSpin(patch?: Partial<PlayerData>) {
         const updatedLoadout = patch ? { ...pendingLoadout, ...patch } : pendingLoadout;
-        const remaining = spinsRemaining - 1;
         setPendingLoadout(updatedLoadout);
-        setSpinsRemaining(remaining);
+        setSpinsRemaining(spinsRemaining - 1);
         setActiveWheel(null);
         setRolledItem(null);
         setRolledPassive(null);
-        if (remaining === 0 && pendingMission) commitMission(pendingMission, updatedLoadout);
     }
 
     return (
         <>
-            <button className="mission-button" onClick={open}>Log Mission Result</button>
+            <button className="starting-armor-button" onClick={open}>Log Mission Result</button>
 
             <dialog ref={dialogRef} className="item-picker mission-results-dialog">
                 {step === "form" && (
@@ -113,16 +119,24 @@ export function MissionResults(props: MissionResultsProps) {
                             <li><label><input type="checkbox" checked={basesDestroyed} onChange={e => setBasesDestroyed(e.target.checked)} /> All Enemy Bases Destroyed</label></li>
                             <li><label><input type="checkbox" checked={operationCompleted} onChange={e => setOperationCompleted(e.target.checked)} /> Operation Completed (advances difficulty)</label></li>
                         </ul>
-                        <button onClick={submit}>Submit</button>
-                        <button onClick={() => dialogRef.current?.close()}>Cancel</button>
+                        <button className="starting-armor-button" onClick={submit}>Submit</button>
+                        <button className="starting-armor-button" onClick={() => dialogRef.current?.close()}>Cancel</button>
                     </>
                 )}
 
                 {step === "spin" && spinsRemaining <= 0 && (
                     <>
-                        <h3>All spins used.</h3>
-                        {operationCompleted && <p>Difficulty advanced to {props.player.level}.</p>}
-                        <button onClick={() => dialogRef.current?.close()}>Done</button>
+                        <h3>{pendingMission?.spinsEarned ? "All spins used." : "No spins earned."}</h3>
+                        {pendingMission?.operationCompleted && <p>Difficulty will advance to {nextLevel(pendingMission)}.</p>}
+                        {Object.keys(pendingLoadout).length > 0 && (
+                            <ul className="package-effects">
+                                {Object.entries(pendingLoadout).map(([field, value]) => (
+                                    <li key={field}>{field}: {field === "armor" ? formatArmorName(String(value), props.armory) : String(value)}</li>
+                                ))}
+                            </ul>
+                        )}
+                        <button className="starting-armor-button" onClick={acceptMission}>Accept</button>
+                        <button className="starting-armor-button" onClick={cancelLootDrops}>Cancel</button>
                     </>
                 )}
 
@@ -136,14 +150,14 @@ export function MissionResults(props: MissionResultsProps) {
                                     : wheelPool(wheel, props.armory, lootPlayer).length;
                                 return (
                                     <li key={wheel.label}>
-                                        <button disabled={poolSize === 0} onClick={() => pickWheel(wheel)}>
+                                        <button className="starting-armor-button" disabled={poolSize === 0} onClick={() => pickWheel(wheel)}>
                                             {wheel.label} ({poolSize} available)
                                         </button>
                                     </li>
                                 );
                             })}
                         </ul>
-                        <button onClick={cancelLootDrops}>Cancel</button>
+                        <button className="starting-armor-button" onClick={cancelLootDrops}>Cancel</button>
                     </>
                 )}
 
@@ -159,18 +173,18 @@ export function MissionResults(props: MissionResultsProps) {
                                 <ul>
                                     {armorSetsWithPassive(props.armory, rolledPassive).map(item => (
                                         <li key={item.name}>
-                                            <button onClick={() => finishSpin({ armor: item.name })}>
+                                            <button className="starting-armor-button" onClick={() => finishSpin({ armor: item.name })}>
                                                 {formatArmorName(item.name, props.armory)}
                                             </button>
                                         </li>
                                     ))}
                                 </ul>
-                                <button onClick={() => finishSpin()}>Keep current gear</button>
+                                <button className="starting-armor-button" onClick={() => finishSpin()}>Keep current gear</button>
                             </>
                         ) : (
                             <>
                                 <p>No new result here - everything eligible is already equipped or unavailable.</p>
-                                <button onClick={() => finishSpin()}>Keep current gear</button>
+                                <button className="starting-armor-button" onClick={() => finishSpin()}>Keep current gear</button>
                             </>
                         )}
                     </>
@@ -191,22 +205,26 @@ export function MissionResults(props: MissionResultsProps) {
                                         const currentItem = String(lootPlayer[field]) || "-";
                                         return (
                                             <li key={field}>
-                                                <button onClick={() => finishSpin({ [field]: rolledItem.name })}>
+                                                <button className="starting-armor-button" onClick={() => finishSpin({ [field]: rolledItem.name })}>
                                                     Equip as {field} (currently: {currentItem})
                                                 </button>
                                             </li>
                                         );
                                     })}
                                 </ul>
-                                <button onClick={() => finishSpin()}>Keep current gear</button>
+                                <button className="starting-armor-button" onClick={() => finishSpin()}>Keep current gear</button>
                             </>
                         ) : (
                             <>
                                 <p>No new result here - everything eligible is already equipped or unavailable.</p>
-                                <button onClick={() => finishSpin()}>Keep current gear</button>
+                                <button className="starting-armor-button" onClick={() => finishSpin()}>Keep current gear</button>
                             </>
                         )}
                     </>
+                )}
+
+                {step === "spin" && activeWheel && (
+                    <button className="starting-armor-button" onClick={cancelLootDrops}>Cancel</button>
                 )}
             </dialog>
         </>
