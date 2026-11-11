@@ -105,7 +105,13 @@ export function useArmory() {
     useEffect(() => {
         function loadData() {
             const cachedRaw = localStorage.getItem(CACHE_KEY);
-            let cached: ArmoryCache | null = cachedRaw ? JSON.parse(cachedRaw) : null;
+            let cached: ArmoryCache | null = null;
+            try {
+                cached = cachedRaw ? JSON.parse(cachedRaw) : null;
+            } 
+            catch (error) {
+                console.error("Error parsing cached armory data:", error);
+            }
 
             let liveData: ArmoryData | null = null;
             if (cached)

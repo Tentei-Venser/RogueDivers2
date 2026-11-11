@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import type { PlayerData } from "../../types/Objects";
 import { getDefaultLoudout } from "../../data/Player";
 import "./PlayerView.css"
@@ -7,14 +7,10 @@ interface DeathFlowProps {
     onUpdate: (patch: Partial<PlayerData>) => void;
 }
 
-const DIFFICULTIES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
-
 export function DeathFlow(props: DeathFlowProps) {
     const dialogRef = useRef<HTMLDialogElement>(null);
-    const [step, setStep] = useState<"outcome" | "difficulty">("outcome");
 
     function open() {
-        setStep("outcome");
         dialogRef.current?.showModal();
     }
 
@@ -25,39 +21,26 @@ export function DeathFlow(props: DeathFlowProps) {
         dialogRef.current?.close();
     }
 
-    function squadExtracted(difficulty: number) {
-        // Rejoin at the squad's current difficulty with a fresh starting-kit loadout and no
-        // Specialization/Requisitions yet - MilestonePicker (already mounted) will pick up from
-        // here and prompt for whatever the Team Milestone tier at this difficulty grants.
-        props.onUpdate({ ...getDefaultLoudout(), level: difficulty });
-        dialogRef.current?.close();
-    }
-
     return (
         <>
-            <button className="starting-armor-button" onClick={open}>My Diver Died</button>
+            <button className="starting-armor-button" onClick={open}>Helldiver Squad Wiped</button>
 
-            <dialog ref={dialogRef} className="item-picker" onClose={() => setStep("outcome")}>
-                {step === "outcome" && (
-                    <>
-                        <h3>Did the squad complete the mission and extract without you?</h3>
-                        <ul>
-                            <li><button className="starting-armor-button" onClick={() => setStep("difficulty")}>Yes - squad extracted</button></li>
-                            <li><button className="starting-armor-button" onClick={squadWiped}>No - squad was wiped</button></li>
-                        </ul>
-                    </>
-                )}
-                {step === "difficulty" && (
-                    <>
-                        <h3>What difficulty is the squad currently at?</h3>
-                        <ul>
-                            {DIFFICULTIES.map(d => (
-                                <li key={d}><button className="starting-armor-button" onClick={() => squadExtracted(Number(d))}>{d}</button></li>
-                            ))}
-                        </ul>
-                    </>
-                )}
-                <button className="starting-armor-button" onClick={() => dialogRef.current?.close()}>Cancel</button>
+            <dialog ref={dialogRef} className="item-picker">
+                <h3>Your sacrifice will be noted in the Annals of Democracy.</h3>
+                <p>This will reset your diver and progress.</p>
+                <p>Continue?</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignSelf: "end" }} >
+                    <button 
+                        className="starting-armor-button" 
+                        onClick={() => dialogRef.current?.close()}>
+                            Cancel
+                    </button>
+                    <button 
+                        className="starting-armor-button" 
+                        onClick={squadWiped}>
+                            Reset all Progress
+                    </button>
+                </div>
             </dialog>
         </>
     );

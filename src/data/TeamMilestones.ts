@@ -15,5 +15,10 @@ export const TEAM_MILESTONES: TeamMilestone[] = [
         difficultyThreshold: 7,
         specializationChoices: 1,
         requisitionChoices: 2
+    },
+    {
+        difficultyThreshold: 9,
+        specializationChoices: 1,
+        requisitionChoices: 3
     }
 ]

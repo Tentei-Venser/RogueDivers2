@@ -83,7 +83,7 @@ export function isPackageAvailable(pkg: LoadoutPackage, armory: ArmoryData): boo
         .every(([field, value]) => resolveGrantOptions(value, armory, field).length > 0);
 }
 
-function packageFieldLabel(field: keyof PlayerData): string {
+export function packageFieldLabel(field: keyof PlayerData): string {
     if (field.startsWith("stratagem")) return `Stratagem ${field.slice("stratagem".length)}`;
     const labels: Partial<Record<keyof PlayerData, string>> = {
         primary: "Primary",
@@ -91,6 +91,8 @@ function packageFieldLabel(field: keyof PlayerData): string {
         grenade: "Grenade",
         armor: "Armor",
         booster: "Booster",
+        specialization: "Specialization",
+        requisitions: "Requisitions",
     };
     return labels[field] ?? field;
 }

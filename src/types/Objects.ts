@@ -125,8 +125,9 @@ export interface MissionResult {
     primaryCompleted: boolean;
     secondariesCompleted: boolean;
     basesDestroyed: boolean;
-    spinsEarned: number;            // 1 per True boolean above
+    spinsEarned: number;            // 1 per True boolean above, or 0 if the Diver died.
     operationCompleted: boolean;    // if true, increase difficulty by 1 and level up!
+    diverDied: boolean;             // if true, the Diver died but the squad extracted. No spins earned.
 }
 
 export interface GameItem {

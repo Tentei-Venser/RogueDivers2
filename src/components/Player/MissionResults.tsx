@@ -1,13 +1,25 @@
 import { useRef, useState } from "react";
-import type { ArmoryData, GameItem, Keyword, MissionResult, PlayerData } from "../../types/Objects";
+import type { ArmoryData, GameItem, Keyword, LoadoutPackage, MissionResult, PlayerData } from "../../types/Objects";
 import { WHEELS, WHEEL_FIELDS, rollWheel, wheelPool, armorPassivePool, rollArmorPassive, armorSetsWithPassive, type Wheel } from "../../data/Wheels";
 import { formatArmorName, formatArmorPassive } from "../../data/Armory";
+import { packageFieldLabel } from "../../data/Milestones";
+import { usePackagePick } from "../../data/usePackagePick";
+import { PackageChoices, FieldChoices, SlotChoices } from "./PackagePickViews";
 import "./PlayerView.css"
+import { getDefaultLoudout } from "../../data/Player";
 
 interface MissionResultsProps {
     player: PlayerData;
     armory: ArmoryData;
     onUpdate: (patch: Partial<PlayerData>) => void;
+}
+
+// Human-readable value of a loadout field for the summary screen.
+function formatLoadoutValue(field: keyof PlayerData, value: PlayerData[keyof PlayerData], armory: ArmoryData): string {
+    if (field === "specialization") return (value as LoadoutPackage).name || "None";
+    if (field === "requisitions") return (value as LoadoutPackage[]).map(pkg => pkg.name).join(", ") || "None";
+    if (field === "armor") return value ? formatArmorName(String(value), armory) : "None";
+    return String(value) || "None";
 }
 
 export function MissionResults(props: MissionResultsProps) {
@@ -17,13 +29,37 @@ export function MissionResults(props: MissionResultsProps) {
     const [secondariesCompleted, setSecondariesCompleted] = useState(false);
     const [basesDestroyed, setBasesDestroyed] = useState(false);
     const [operationCompleted, setOperationCompleted] = useState(false);
+    const [diverDied, setDiverDied] = useState(false);
     const [spinsRemaining, setSpinsRemaining] = useState(0);
     const [activeWheel, setActiveWheel] = useState<Wheel | null>(null);
     const [rolledItem, setRolledItem] = useState<GameItem | null>(null);
     const [rolledPassive, setRolledPassive] = useState<Keyword | null>(null);
     const [pendingMission, setPendingMission] = useState<MissionResult | null>(null);
     const [pendingLoadout, setPendingLoadout] = useState<Partial<PlayerData>>({});
+    const [milestonesSkipped, setMilestonesSkipped] = useState(false);
     const lootPlayer = { ...props.player, ...pendingLoadout };
+
+    // Patches stack onto pendingLoadout in a fixed order: the death reset (in submit), then each
+    // milestone package, then each spin. Milestone picks are made against the staged Diver at the
+    // post-mission level, so a death reset re-opens the Specialization and every Requisition due
+    // at that level, and spins afterwards see whatever the packages granted.
+    const milestoneView = pendingMission
+        ? { ...lootPlayer, level: nextLevel(pendingMission) }
+        : lootPlayer;
+    const picker = usePackagePick(milestoneView, props.armory,
+        patch => setPendingLoadout(prev => ({ ...prev, ...patch })));
+
+    // Re-derived each render: picks stay up while any is due (or one is mid-resolution), then the
+    // spin screens take over. Skip hands any remaining picks to the MilestonePicker banner.
+    const milestonePhase = step === "spin" && !milestonesSkipped
+        && (picker.pendingKind !== null || picker.chosenPackage !== null);
+    const spinPhase = step === "spin" && !milestonePhase;
+
+    // Summary lists only the fields whose value actually changes, compared as displayed text so a
+    // re-granted item (or the same starting kit after a death) isn't reported as a change.
+    const changedFields = (Object.keys(pendingLoadout) as (keyof PlayerData)[]).filter(field =>
+        formatLoadoutValue(field, lootPlayer[field], props.armory)
+            !== formatLoadoutValue(field, props.player[field], props.armory));
 
     function open() {
         setStep("form");
@@ -31,12 +67,15 @@ export function MissionResults(props: MissionResultsProps) {
         setSecondariesCompleted(false);
         setBasesDestroyed(false);
         setOperationCompleted(false);
+        setDiverDied(false);
         setSpinsRemaining(0);
         setActiveWheel(null);
         setRolledItem(null);
         setRolledPassive(null);
         setPendingMission(null);
         setPendingLoadout({});
+        setMilestonesSkipped(false);
+        picker.cancelPick();
         dialogRef.current?.showModal();
     }
 
@@ -64,12 +103,14 @@ export function MissionResults(props: MissionResultsProps) {
         setActiveWheel(null);
         setRolledItem(null);
         setRolledPassive(null);
+        setMilestonesSkipped(false);
+        picker.cancelPick();
         setStep("form");
         dialogRef.current?.close();
     }
 
     function submit() {
-        const spins = [primaryCompleted, secondariesCompleted, basesDestroyed].filter(Boolean).length;
+        const spins = diverDied ? 0 : [primaryCompleted, secondariesCompleted, basesDestroyed].filter(Boolean).length;
         const result: MissionResult = {
             difficulty: props.player.level,
             primaryCompleted,
@@ -77,11 +118,32 @@ export function MissionResults(props: MissionResultsProps) {
             basesDestroyed,
             spinsEarned: spins,
             operationCompleted,
+            diverDied,
         };
 
+        if (diverDied) {
+            // Reset the pending loadout to a fresh starting kit for the next mission. Requisitions
+            // are wiped wholesale - an unused Phoenix Down goes with everything else.
+            const defaultLoadout = getDefaultLoudout();
+            setPendingLoadout({
+                primary: defaultLoadout.primary,
+                secondary: defaultLoadout.secondary,
+                grenade: defaultLoadout.grenade,
+                armor: defaultLoadout.armor,
+                stratagem1: defaultLoadout.stratagem1,
+                stratagem2: defaultLoadout.stratagem2,
+                stratagem3: defaultLoadout.stratagem3,
+                stratagem4: defaultLoadout.stratagem4,
+                booster: defaultLoadout.booster,
+                specialization: defaultLoadout.specialization,
+                requisitions: defaultLoadout.requisitions,
+            });
+        }
+        else {
+            setPendingLoadout({});
+        }
         setSpinsRemaining(spins);
         setPendingMission(result);
-        setPendingLoadout({});
         setStep("spin");
     }
 
@@ -97,8 +159,7 @@ export function MissionResults(props: MissionResultsProps) {
     }
 
     function finishSpin(patch?: Partial<PlayerData>) {
-        const updatedLoadout = patch ? { ...pendingLoadout, ...patch } : pendingLoadout;
-        setPendingLoadout(updatedLoadout);
+        if (patch) setPendingLoadout(prev => ({ ...prev, ...patch }));
         setSpinsRemaining(spinsRemaining - 1);
         setActiveWheel(null);
         setRolledItem(null);
@@ -118,20 +179,50 @@ export function MissionResults(props: MissionResultsProps) {
                             <li><label><input type="checkbox" checked={secondariesCompleted} onChange={e => setSecondariesCompleted(e.target.checked)} /> All Secondary Objectives Completed</label></li>
                             <li><label><input type="checkbox" checked={basesDestroyed} onChange={e => setBasesDestroyed(e.target.checked)} /> All Enemy Bases Destroyed</label></li>
                             <li><label><input type="checkbox" checked={operationCompleted} onChange={e => setOperationCompleted(e.target.checked)} /> Operation Completed (advances difficulty)</label></li>
+                            <li><label><input type="checkbox" checked={diverDied} onChange={e => setDiverDied(e.target.checked)} /> My Diver Died</label></li>
                         </ul>
                         <button className="starting-armor-button" onClick={submit}>Submit</button>
                         <button className="starting-armor-button" onClick={() => dialogRef.current?.close()}>Cancel</button>
                     </>
                 )}
 
-                {step === "spin" && spinsRemaining <= 0 && (
+                {milestonePhase && !picker.chosenPackage && (
                     <>
-                        <h3>{pendingMission?.spinsEarned ? "All spins used." : "No spins earned."}</h3>
+                        <PackageChoices pick={picker} armory={props.armory} />
+                        <button className="starting-armor-button" onClick={() => setMilestonesSkipped(true)}>Skip for now</button>
+                        <button className="starting-armor-button" onClick={cancelLootDrops}>Cancel</button>
+                    </>
+                )}
+
+                {milestonePhase && picker.pendingFields.length > 0 && (
+                    <>
+                        <FieldChoices pick={picker} armory={props.armory} />
+                        <button className="starting-armor-button" onClick={picker.cancelPick}>Back</button>
+                        <button className="starting-armor-button" onClick={cancelLootDrops}>Cancel</button>
+                    </>
+                )}
+
+                {milestonePhase && picker.pendingFields.length === 0 && picker.pendingSlots.length > 0 && (
+                    <>
+                        <SlotChoices pick={picker} />
+                        <button className="starting-armor-button" onClick={picker.cancelPick}>Back</button>
+                        <button className="starting-armor-button" onClick={cancelLootDrops}>Cancel</button>
+                    </>
+                )}
+
+                {spinPhase && spinsRemaining <= 0 && (
+                    <>
+                        <h3>{pendingMission?.diverDied
+                            ? "Diver died - no spins earned."
+                            : pendingMission?.spinsEarned
+                                ? "All spins used."
+                                : "No spins earned."}</h3>
                         {pendingMission?.operationCompleted && <p>Difficulty will advance to {nextLevel(pendingMission)}.</p>}
-                        {Object.keys(pendingLoadout).length > 0 && (
+                        {pendingMission?.diverDied && <p>Your Diver will be reset to the starting kit.</p>}
+                        {changedFields.length > 0 && (
                             <ul className="package-effects">
-                                {Object.entries(pendingLoadout).map(([field, value]) => (
-                                    <li key={field}>{field}: {field === "armor" ? formatArmorName(String(value), props.armory) : String(value)}</li>
+                                {changedFields.map(field => (
+                                    <li key={field}>{packageFieldLabel(field)}: {formatLoadoutValue(field, lootPlayer[field], props.armory)}</li>
                                 ))}
                             </ul>
                         )}
@@ -140,7 +231,7 @@ export function MissionResults(props: MissionResultsProps) {
                     </>
                 )}
 
-                {step === "spin" && spinsRemaining > 0 && !activeWheel && (
+                {spinPhase && spinsRemaining > 0 && !activeWheel && (
                     <>
                         <h3>{spinsRemaining} spin{spinsRemaining > 1 ? "s" : ""} remaining - pick a wheel</h3>
                         <ul>
@@ -161,7 +252,7 @@ export function MissionResults(props: MissionResultsProps) {
                     </>
                 )}
 
-                {step === "spin" && activeWheel && activeWheel.rollsPassive && (
+                {spinPhase && activeWheel && activeWheel.rollsPassive && (
                     <>
                         <h3>{activeWheel.label}</h3>
                         {rolledPassive ? (
@@ -190,7 +281,7 @@ export function MissionResults(props: MissionResultsProps) {
                     </>
                 )}
 
-                {step === "spin" && activeWheel && !activeWheel.rollsPassive && (
+                {spinPhase && activeWheel && !activeWheel.rollsPassive && (
                     <>
                         <h3>{activeWheel.label}</h3>
                         {rolledItem ? (
@@ -223,7 +314,7 @@ export function MissionResults(props: MissionResultsProps) {
                     </>
                 )}
 
-                {step === "spin" && activeWheel && (
+                {spinPhase && activeWheel && (
                     <button className="starting-armor-button" onClick={cancelLootDrops}>Cancel</button>
                 )}
             </dialog>
