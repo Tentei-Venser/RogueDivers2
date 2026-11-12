@@ -12,6 +12,12 @@ All notable changes to the Roguedivers II Companion App are recorded here, newes
   - **Throwable:** G-11 Caltrops.
   - **Stratagems:** GR-8 Recoilless Rifle, AMW-20 Apex, LAS-44 Nova and TD-110 Maelstrom.
 - **Automatic Armory updates.** When the app's gear catalog changes, your saved Armory is updated on the next load, and all your checked items are kept. A one-time notice at the top of the page says which catalog version you're on and how many new items were added.
+- **Keep weapons you extract with.** Mission Results has a new "Weapons found in-mission and extracted with" section with one Primary, one Secondary and one Support Weapon choice. Picking one adds it to your loadout, and a support weapon goes into a stratagem slot you choose. Leave a choice blank to decline it.
+  - Only weapons that can be found in a mission are listed (from the Helldivers wiki), and only ones checked in your Armory.
+  - The Break-Action Shotgun counts as the DBS-2 Double Freedom, and the CQC-72 Entrenchment Tool counts as the CQC-73 Entrenchment Tool.
+  - Not available when "My Diver Died" is checked, since your Diver didn't extract.
+  - Extracted weapons are listed in Mission History.
+- **Light/dark theme button** in the footer. It cycles between Auto (follows your system setting), Light and Dark, and remembers your choice.
 
 ### Changed
 - **Boosters with no effect on a Roguedivers run are never offered.** Sample Extricator, Sample Scanner, Increased Reinforcement Budget and Flexible Reinforcement Budget are skipped by the Booster wheel, milestone grants and rerolls, and the loadout "Change" picker. They still appear in the Armory checklist.
@@ -22,8 +28,10 @@ All notable changes to the Roguedivers II Companion App are recorded here, newes
 
 ### Developer
 - **Wiki audit scripts.** `python scripts/fetch_wiki_categories.py` downloads equipment lists from the Helldivers wiki API (helldivers.wiki.gg). `python scripts/compare_armory.py` then lists what `ArmoryBackup.ts` is missing or has extra.
-- `CATALOG_VERSION` in `ArmoryBackup.ts` (a `YYYY-MM-DD` date) must be bumped whenever the catalog changes. Saved Armories with a different version are merged automatically.
+- `CATALOG_VERSION` in `ArmoryBackup.ts` (a `YYYY-MM-DD` date) must be bumped whenever the catalog changes. Saved Armories with a different version are merged automatically. For a second change on the same day, add a suffix (`YYYY-MM-DD.2`).
 - New `disabled` field on catalog items, checked by `isPickable()` everywhere gear is picked.
+- New `foundInMission` and `pickupName` fields on catalog items. `newGameItem` now takes its flags as an options object, e.g. `newGameItem(name, keywords, { foundInMission: true })`.
+- Colours in `index.css` use `light-dark()`, switched by `data-theme` on `<html>`. An inline script in `index.html` applies the saved theme before first paint.
 
 ## 2026-11-11
 

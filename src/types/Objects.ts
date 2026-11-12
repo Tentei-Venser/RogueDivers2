@@ -129,6 +129,7 @@ export interface MissionResult {
     spinsEarned: number;            // 1 per True boolean above, or 0 if the Diver died.
     operationCompleted: boolean;    // if true, increase difficulty by 1 and level up!
     diverDied: boolean;             // if true, the Diver died but the squad extracted. No spins earned.
+    extractedWeapons?: string[];    // Armory names of in-mission finds the Diver extracted with and equipped. Missing on older entries.
 }
 
 export interface GameItem {
@@ -137,21 +138,26 @@ export interface GameItem {
     locked: boolean;        // Used to prevent removing starting gear from the armory.
     keywords?: Keyword[];   // List of keywords for filtering ease.
     disabled?: boolean;     // Set in the catalog for items with no effect on a Roguedivers run - never offered by any pick.
+    foundInMission?: boolean; // Can be picked up during a mission; extracting with it lets the Diver equip it.
+    pickupName?: string;    // In-mission name, when the pickup isn't itself an Armory item but maps to this one.
 }
+
+// Optional flags for newGameItem - everything except name and keywords defaults to off.
+export type GameItemOptions = Partial<Pick<GameItem, "available" | "locked" | "disabled" | "foundInMission" | "pickupName">>;
 
 export function newGameItem(name:string,
     keywords: Keyword[] = [],
-    available: boolean = false,
-    locked: boolean = false,
-    disabled: boolean = false)
+    options: GameItemOptions = {})
     : GameItem
 {
     return {
         name,
-        available,
-        locked,
+        available: options.available ?? false,
+        locked: options.locked ?? false,
         keywords,
-        disabled
+        disabled: options.disabled ?? false,
+        foundInMission: options.foundInMission ?? false,
+        pickupName: options.pickupName,
     };
 }
 

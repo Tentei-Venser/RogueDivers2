@@ -90,12 +90,10 @@ export function mergeArmoryData(liveData: ArmoryData, newData: ArmoryCache)
     for (const [category, newItems] of Object.entries(newData.cacheData) as [ItemCategory, GameItem[]][]) {
         merged.data[category] = new Map(
             Array.from(newItems, 
-                newItem => [newItem.name, newGameItem(
-                    newItem.name,
-                    newItem.keywords,
-                    liveData.data[category]?.get(newItem.name)?.available ?? newItem.available,
-                    newItem.locked,
-                    newItem.disabled)]))
+                newItem => [newItem.name, newGameItem(newItem.name, newItem.keywords, {
+                    ...newItem,
+                    available: liveData.data[category]?.get(newItem.name)?.available ?? newItem.available,
+                })]))
     }
     
     return merged;

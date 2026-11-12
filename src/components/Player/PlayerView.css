@@ -208,6 +208,36 @@
     gap: 8px;
 }
 
+.found-weapons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 12px;
+    padding: 8px 12px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: left;
+}
+
+.found-weapons legend {
+    padding: 0 4px;
+    color: var(--text-h);
+}
+
+.found-weapons-note {
+    font-size: 14px;
+}
+
+.found-weapons label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.found-weapons:disabled {
+    opacity: 0.6;
+}
+
 .faction-label {
     grid-column: 1 / 3;
     align-self: center;

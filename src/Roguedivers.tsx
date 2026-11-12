@@ -10,6 +10,10 @@ import { MissionHistoryLog } from './components/Player/MissionHistoryLog'
 import { QuickstartView } from './components/Player/QuickstartView'
 import type { ArmoryData } from './types/Objects'
 import { useState } from 'react'
+import { useTheme, type Theme } from './data/useTheme'
+
+const NEXT_THEME: Record<Theme, Theme> = { system: "light", light: "dark", dark: "system" };
+const THEME_LABEL: Record<Theme, string> = { system: "Theme: Auto", light: "Theme: Light", dark: "Theme: Dark" };
 
 declare const __APP_VERSION__: string
 declare const __DATA_VERSION__: string
@@ -40,6 +44,17 @@ function App() {
     )
 }
 
+function ThemeButton() {
+    const { theme, setTheme } = useTheme()
+    return (
+        <button className="starting-armor-button" type="button"
+            title="Cycle between following your system theme, light, and dark"
+            onClick={() => setTheme(NEXT_THEME[theme])}>
+            {THEME_LABEL[theme]}
+        </button>
+    )
+}
+
 function BuildInfo() {
     const [copied, setCopied] = useState(false)
     const versionInfo = `App v${__APP_VERSION__} | Data v${__DATA_VERSION__} | Commit ${__COMMIT_SHA__}`
@@ -58,6 +73,7 @@ function BuildInfo() {
             <span>{versionInfo}</span>
             <button className="starting-armor-button" type="button" onClick={copyVersionInfo}>Copy version info</button>
             <span className="build-info-status" aria-live="polite">{copied ? "Copied" : ""}</span>
+            <ThemeButton />
         </footer>
     )
 }

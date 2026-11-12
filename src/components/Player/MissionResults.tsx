@@ -3,7 +3,8 @@ import type { ArmoryData, GameItem, Keyword, LoadoutPackage, MissionResult, Play
 import { WHEELS, WHEEL_FIELDS, rollWheel, wheelPool, armorPassivePool, rollArmorPassive, armorSetsWithPassive, type Wheel } from "../../data/Wheels";
 import { formatArmorName, formatArmorPassive } from "../../data/Armory";
 import { packageFieldLabel } from "../../data/Milestones";
-import { usePackagePick } from "../../data/usePackagePick";
+import { usePackagePick, STRATAGEM_SLOTS } from "../../data/usePackagePick";
+import { PICKUP_SLOTS, pickupOptions, pickupLabel, type PickupSlot } from "../../data/MissionPickups";
 import { PackageChoices, FieldChoices, SlotChoices } from "./PackagePickViews";
 import "./PlayerView.css"
 import { getDefaultLoudout } from "../../data/Player";
@@ -22,9 +23,12 @@ function formatLoadoutValue(field: keyof PlayerData, value: PlayerData[keyof Pla
     return String(value) || "None";
 }
 
+const NO_FOUND_WEAPONS: Record<PickupSlot, string> = { primary: "", secondary: "", support: "" };
+
 export function MissionResults(props: MissionResultsProps) {
     const dialogRef = useRef<HTMLDialogElement>(null);
-    const [step, setStep] = useState<"form" | "spin">("form");
+    const [step, setStep] = useState<"form" | "found-slot" | "spin">("form");
+    const [foundWeapons, setFoundWeapons] = useState<Record<PickupSlot, string>>(NO_FOUND_WEAPONS);
     const [primaryCompleted, setPrimaryCompleted] = useState(false);
     const [secondariesCompleted, setSecondariesCompleted] = useState(false);
     const [basesDestroyed, setBasesDestroyed] = useState(false);
@@ -39,8 +43,9 @@ export function MissionResults(props: MissionResultsProps) {
     const [milestonesSkipped, setMilestonesSkipped] = useState(false);
     const lootPlayer = { ...props.player, ...pendingLoadout };
 
-    // Patches stack onto pendingLoadout in a fixed order: the death reset (in submit), then each
-    // milestone package, then each spin. Milestone picks are made against the staged Diver at the
+    // Patches stack onto pendingLoadout in a fixed order: the death reset or extracted in-mission
+    // finds (in submit, plus the support weapon's slot choice), then each milestone package, then
+    // each spin. Milestone picks are made against the staged Diver at the
     // post-mission level, so a death reset re-opens the Specialization and every Requisition due
     // at that level, and spins afterwards see whatever the packages granted.
     const milestoneView = pendingMission
@@ -68,6 +73,7 @@ export function MissionResults(props: MissionResultsProps) {
         setBasesDestroyed(false);
         setOperationCompleted(false);
         setDiverDied(false);
+        setFoundWeapons(NO_FOUND_WEAPONS);
         setSpinsRemaining(0);
         setActiveWheel(null);
         setRolledItem(null);
@@ -109,8 +115,15 @@ export function MissionResults(props: MissionResultsProps) {
         dialogRef.current?.close();
     }
 
+    // A Diver who died didn't extract, so in-mission finds can't be kept - checking it clears them.
+    function changeDiverDied(died: boolean) {
+        setDiverDied(died);
+        if (died) setFoundWeapons(NO_FOUND_WEAPONS);
+    }
+
     function submit() {
         const spins = diverDied ? 0 : [primaryCompleted, secondariesCompleted, basesDestroyed].filter(Boolean).length;
+        const extracted = diverDied ? [] : PICKUP_SLOTS.map(slot => foundWeapons[slot.key]).filter(name => name !== "");
         const result: MissionResult = {
             difficulty: props.player.level,
             primaryCompleted,
@@ -119,6 +132,7 @@ export function MissionResults(props: MissionResultsProps) {
             spinsEarned: spins,
             operationCompleted,
             diverDied,
+            ...(extracted.length > 0 && { extractedWeapons: extracted }),
         };
 
         if (diverDied) {
@@ -140,10 +154,20 @@ export function MissionResults(props: MissionResultsProps) {
             });
         }
         else {
-            setPendingLoadout({});
+            // Extracted in-mission primary/secondary replace that slot; a support weapon is placed
+            // in the found-slot step next.
+            const found: Partial<PlayerData> = {};
+            if (foundWeapons.primary) found.primary = foundWeapons.primary;
+            if (foundWeapons.secondary) found.secondary = foundWeapons.secondary;
+            setPendingLoadout(found);
         }
         setSpinsRemaining(spins);
         setPendingMission(result);
+        setStep(!diverDied && foundWeapons.support ? "found-slot" : "spin");
+    }
+
+    function placeFoundSupport(slot: typeof STRATAGEM_SLOTS[number]) {
+        setPendingLoadout(prev => ({ ...prev, [slot]: foundWeapons.support }));
         setStep("spin");
     }
 
@@ -179,10 +203,48 @@ export function MissionResults(props: MissionResultsProps) {
                             <li><label><input type="checkbox" checked={secondariesCompleted} onChange={e => setSecondariesCompleted(e.target.checked)} /> All Secondary Objectives Completed</label></li>
                             <li><label><input type="checkbox" checked={basesDestroyed} onChange={e => setBasesDestroyed(e.target.checked)} /> All Enemy Bases Destroyed</label></li>
                             <li><label><input type="checkbox" checked={operationCompleted} onChange={e => setOperationCompleted(e.target.checked)} /> Operation Completed (advances difficulty)</label></li>
-                            <li><label><input type="checkbox" checked={diverDied} onChange={e => setDiverDied(e.target.checked)} /> My Diver Died</label></li>
+                            <li><label><input type="checkbox" checked={diverDied} onChange={e => changeDiverDied(e.target.checked)} /> My Diver Died</label></li>
                         </ul>
+                        <fieldset className="found-weapons" disabled={diverDied}>
+                            <legend>Weapons found in-mission and extracted with</legend>
+                            <p className="found-weapons-note">
+                                {diverDied
+                                    ? "Not available - your Diver didn't extract."
+                                    : "Select a weapon to add it to your loadout, or leave it blank to decline. Only weapons found in the mission count, not ones a squadmate brought."}
+                            </p>
+                            {PICKUP_SLOTS.map(slot => (
+                                <label key={slot.key}>
+                                    {slot.label}
+                                    <select
+                                        value={foundWeapons[slot.key]}
+                                        onChange={e => setFoundWeapons(prev => ({ ...prev, [slot.key]: e.target.value }))}>
+                                        <option value="">None</option>
+                                        {pickupOptions(slot.key, props.armory, props.player).map(item => (
+                                            <option key={item.name} value={item.name}>{pickupLabel(item)}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                            ))}
+                        </fieldset>
                         <button className="starting-armor-button" onClick={submit}>Submit</button>
                         <button className="starting-armor-button" onClick={() => dialogRef.current?.close()}>Cancel</button>
+                    </>
+                )}
+
+                {step === "found-slot" && (
+                    <>
+                        <h3>Place {foundWeapons.support} in which stratagem slot?</h3>
+                        <ul>
+                            {STRATAGEM_SLOTS.map((slot, index) => (
+                                <li key={slot}>
+                                    <button className="starting-armor-button" onClick={() => placeFoundSupport(slot)}>
+                                        Stratagem {index + 1}: {lootPlayer[slot] || "Empty"}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                        <button className="starting-armor-button" onClick={() => setStep("form")}>Back</button>
+                        <button className="starting-armor-button" onClick={cancelLootDrops}>Cancel</button>
                     </>
                 )}
 

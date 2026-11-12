@@ -1,15 +1,19 @@
+/* Each colour is light-dark(light value, dark value), resolved by the color-scheme in effect:
+   the OS preference by default, or forced by the theme button via data-theme on <html>. */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #c084fc;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
+  --text: light-dark(#6b6375, #9ca3af);
+  --text-h: light-dark(#08060d, #f3f4f6);
+  --bg: light-dark(#fff, #16171d);
+  --border: light-dark(#e5e4e7, #2e303a);
+  --code-bg: light-dark(#f4f3ec, #1f2028);
+  --accent: light-dark(#c084fc, #f3f4f6);
+  --accent-bg: light-dark(rgba(170, 59, 255, 0.1), rgba(192, 132, 252, 0.15));
+  --accent-border: light-dark(rgba(170, 59, 255, 0.5), rgba(192, 132, 252, 0.5));
+  --social-bg: light-dark(rgba(244, 243, 236, 0.5), rgba(47, 48, 58, 0.5));
+  --shadow-strong: light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4));
+  --shadow-soft: light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.25));
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    var(--shadow-strong) 0 10px 15px -3px, var(--shadow-soft) 0 4px 6px -2px;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -30,24 +34,12 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #f3f4f6;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+:root[data-theme="light"] {
+  color-scheme: light;
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 #root {
