@@ -1,4 +1,5 @@
 import type { ArmoryData, GameItem, ItemCategory, Keyword, PlayerData } from "../types/Objects";
+import { isPickable } from "../types/Objects";
 
 export interface Wheel {
     label: string;
@@ -52,7 +53,7 @@ export function wheelPool(wheel: Wheel, armory: ArmoryData, player: PlayerData):
     const avoid = equippedValues(wheel, player);
     const items = Array.from(armory.data[wheel.category]?.values() ?? []);
     return items.filter(item =>
-        item.available &&
+        isPickable(item) &&
         !avoid.has(item.name) &&
         (!wheel.requireKeyword || item.keywords?.includes(wheel.requireKeyword)) &&
         (!wheel.excludeKeyword || !item.keywords?.includes(wheel.excludeKeyword))
@@ -82,7 +83,7 @@ export function armorPassivePool(armory: ArmoryData, player: PlayerData): Keywor
 
     const passives = new Set<Keyword>();
     for (const item of armory.data.armor?.values() ?? []) {
-        if (!item.available) continue;
+        if (!isPickable(item)) continue;
         const passive = passiveOf(item);
         if (passive && passive !== currentPassive) passives.add(passive);
     }
@@ -99,7 +100,7 @@ export function rollArmorPassive(armory: ArmoryData, player: PlayerData): Keywor
 export function armorSetsWithPassive(armory: ArmoryData, passive: Keyword): GameItem[] {
     const items: GameItem[] = [];
     for (const item of armory.data.armor?.values() ?? []) {
-        if (item.available && passiveOf(item) === passive) items.push(item);
+        if (isPickable(item) && passiveOf(item) === passive) items.push(item);
     }
     return items.sort((a, b) => a.name.localeCompare(b.name));
 }

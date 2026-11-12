@@ -1,13 +1,52 @@
 # Changelog
 
-All notable changes to the Roguedivers II Companion App are recorded here.
+All notable changes to the Roguedivers II Companion App are recorded here, newest first. Every push to `main` deploys to GitHub Pages, so each section is dated by the day it went live.
 
-## [Unreleased]
+## 2026-11-12
+
+### Added
+- **New gear in the Armory:**
+  - **Armor:** SS-15 Focal Point (Medium), SS-33 Mimetic Marshal (Light) and SS-500 Pale Prosecutor (Light), with the new **Stationary Shroud** passive.
+  - **Primary weapons:** R-40 Sightliner and AR-23L Liberator Legacy.
+  - **Secondary weapon:** P-44 Mist.
+  - **Throwable:** G-11 Caltrops.
+  - **Stratagems:** GR-8 Recoilless Rifle, AMW-20 Apex, LAS-44 Nova and TD-110 Maelstrom.
+- **Automatic Armory updates.** When the app's gear catalog changes, your saved Armory is updated on the next load, and all your checked items are kept. A one-time notice at the top of the page says which catalog version you're on and how many new items were added.
+
+### Changed
+- **Boosters with no effect on a Roguedivers run are never offered.** Sample Extricator, Sample Scanner, Increased Reinforcement Budget and Flexible Reinforcement Budget are skipped by the Booster wheel, milestone grants and rerolls, and the loadout "Change" picker. They still appear in the Armory checklist.
+- The Armory no longer refreshes on a 24-hour timer. It updates only when the catalog actually changes. "Refresh Catalog" still forces an update.
+
+### Fixed
+- **LAS-4 Sai renamed to LAS-12 Sai**, its correct in-game name. If you had the LAS-4 checked in your Armory, check the LAS-12 again.
+
+### Developer
+- **Wiki audit scripts.** `python scripts/fetch_wiki_categories.py` downloads equipment lists from the Helldivers wiki API (helldivers.wiki.gg). `python scripts/compare_armory.py` then lists what `ArmoryBackup.ts` is missing or has extra.
+- `CATALOG_VERSION` in `ArmoryBackup.ts` (a `YYYY-MM-DD` date) must be bumped whenever the catalog changes. Saved Armories with a different version are merged automatically.
+- New `disabled` field on catalog items, checked by `isPickable()` everywhere gear is picked.
+
+## 2026-11-11
+
+### Added
+- **"My Diver Died" option in Mission Results**, for when your Diver dies but the squad extracts. No loot spins are earned, and your loadout, Specialization and Requisitions reset to the starting kit. An unspent Phoenix Down is lost too.
+- **Milestone picks during Mission Results.** After you submit a mission, any Specialization or Requisition due at the new difficulty is offered before the loot spins, including picks reopened by a death reset. **Skip for now** leaves them for the "Pick now" banner.
+- **Difficulty 9 Team Milestone:** 1 Specialization and 3 Requisitions.
+
+### Changed
+- **"My Diver Died" button replaced by "Helldiver Squad Wiped".** It now only handles a full reset, behind a confirmation. Rejoining after the squad extracts is handled in Mission Results.
+- The mission summary lists only gear that actually changes, with readable names for Specializations and Requisitions.
+- Quick Start guide rewritten for the new mission and death flow, including the Difficulty 9 milestone.
+
+### Fixed
+- A corrupted saved Armory no longer stops the app from loading.
+
+## 2026-10-09
 
 ### Added
 - **Stratagem slot selection for milestones.** When a Specialization or Requisition grants stratagems, the player now chooses which stratagem slot (1-4) each one goes into, instead of it always overwriting slot 1, 2, etc. Each slot button shows what is currently equipped there.
 - **Mission summary screen.** Logging a mission now ends with a summary of the new difficulty and every gear change from loot spins, with **Accept** and **Cancel** buttons.
 - Cancel buttons on every step of the Milestone Picker and on the loot wheel result screens.
+- LAS-4 Sai in the Armory (renamed to LAS-12 Sai on 2026-11-12).
 
 ### Changed
 - **Selection screens only apply changes once they are finished and accepted.** Cancelling at any step, with the Cancel button or Escape, now discards everything and leaves the Diver unchanged:

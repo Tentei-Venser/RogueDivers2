@@ -1,4 +1,4 @@
-import type { ArmoryData, ItemCategory } from "../../types/Objects";
+import type { ArmoryData, CatalogUpdate, ItemCategory } from "../../types/Objects";
 import { formatArmorName } from "../../data/Armory";
 import "./ArmoryView.css"
 
@@ -17,6 +17,20 @@ interface ArmoryViewProps {
     onRefresh: () => void,
     onSelectAll: () => void,
     onDeselectAll: () => void
+}
+
+// One-time notice after a saved Armory was automatically merged with a newer catalog.
+export function CatalogUpdateNotice({ update, onDismiss }: { update: CatalogUpdate, onDismiss: () => void }) {
+    return (
+        <div className="catalog-update-notice" role="status">
+            <span>
+                Armory updated to the {update.version} catalog. Your checked items were kept.
+                {update.newItems > 0 &&
+                    ` ${update.newItems} new item${update.newItems === 1 ? "" : "s"} added - check any you own in the Armory below.`}
+            </span>
+            <button className="starting-armor-button" type="button" onClick={onDismiss}>Dismiss</button>
+        </div>
+    );
 }
 
 export function ArmoryView(props:ArmoryViewProps){

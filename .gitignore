@@ -18,6 +18,9 @@ dist-ssr
 .idea
 .claude/
 
+# Wiki data downloaded by scripts/fetch_wiki_categories.py
+scripts/.wiki-cache/
+
 # Third-party ruleset document - not ours to redistribute
 /*.pdf
 .DS_Store

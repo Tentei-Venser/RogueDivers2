@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import type { ArmoryData, ItemCategory, PlayerRow, PlayerData, LoadoutPackage } from "../../types/Objects";
+import { isPickable } from "../../types/Objects";
 import { describePackageEffects } from "../../data/Milestones";
 import { formatArmorName, formatArmorKeywords } from "../../data/Armory";
 import { FactionTracker } from "./FactionTracker";
@@ -16,7 +17,7 @@ function getUnlockedItems(armory: ArmoryData, categories: ItemCategory[])
     const names: string[] = [];
     for (const category of categories) {
         for (const item of armory.data[category]?.values() ?? []){
-            if (item.available) names.push(item.name);
+            if (isPickable(item)) names.push(item.name);
         }
     }
     return names.sort((a, b) => a.localeCompare(b));
@@ -43,7 +44,7 @@ function fromCategories(field: keyof PlayerData, categories: ItemCategory[])
     return {
         label: field,
         getValue: player => {
-            var val = player[field];
+            let val = player[field];
             if (Array.isArray(val))
                 return val.map(loadout => (loadout as LoadoutPackage).name).join(", ") || "";
             else if (typeof val === "object")

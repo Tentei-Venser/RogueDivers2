@@ -1,9 +1,14 @@
 import type { ArmoryCache } from "../types/Objects";
 import { newGameItem } from "../types/Objects";
 
+// Bump to today's date (YYYY-MM-DD) whenever items, keywords or flags below change - saved Armories
+// built from any other version are merged with this catalog automatically on the next load.
+export const CATALOG_VERSION = "2026-11-12";
+
 export function PopulateArmoryCache() {
     const cache: ArmoryCache = {
         dataTimeStamp: Date.now(),
+        catalogVersion: CATALOG_VERSION,
         cacheData: {
             armor: [
                 newGameItem("A-35 Recon", ["feet-first", "medium-armor"]),
@@ -106,6 +111,9 @@ export function PopulateArmoryCache() {
                 newGameItem("SR-18 Roadblock", ["siege-ready", "heavy-armor"]),
                 newGameItem("SR-24 Street Scout", ["siege-ready", "light-armor"]),
                 newGameItem("SR-64 Cinderblock", ["siege-ready", "heavy-armor"]),
+                newGameItem("SS-15 Focal Point", ["stationary-shroud", "medium-armor"]),
+                newGameItem("SS-33 Mimetic Marshal", ["stationary-shroud", "light-armor"]),
+                newGameItem("SS-500 Pale Prosecutor", ["stationary-shroud", "light-armor"]),
                 newGameItem("TG-122 Demo-Trooper", ["true-grit", "heavy-armor"]),
                 newGameItem("TG-8 Sharpshooter", ["true-grit", "medium-armor"]),
                 newGameItem("TR-117 Alpha Commander", ["med-kit", "medium-armor"]),
@@ -123,6 +131,7 @@ export function PopulateArmoryCache() {
                 newGameItem("AR-2 Coyote"),
                 newGameItem("AR-23A Liberator Carbine"),
                 newGameItem("AR-23C Liberator Concussive"),
+                newGameItem("AR-23L Liberator Legacy"),
                 newGameItem("AR-23P Liberator Penetrator"),
                 newGameItem("AR-32 Pacifier"),
                 newGameItem("AR-59 Suppressor", ["suppressed"]),
@@ -138,7 +147,7 @@ export function PopulateArmoryCache() {
                 newGameItem("LAS-13 Trident"),
                 newGameItem("LAS-16 Sickle"),
                 newGameItem("LAS-17 Double-Edge Sickle"),
-                newGameItem("LAS-4 Sai"),
+                newGameItem("LAS-12 Sai"),
                 newGameItem("LAS-5 Scythe"),
                 newGameItem("M7S SMG", ["suppressed"]),
                 newGameItem("M90A Shotgun", ["rounds-reload"]),
@@ -151,6 +160,7 @@ export function PopulateArmoryCache() {
                 newGameItem("R-2124 Constitution"),
                 newGameItem("R-36 Eruptor"),
                 newGameItem("R-4 Hyena"),
+                newGameItem("R-40 Sightliner"),
                 newGameItem("R-6 Deadeye"),
                 newGameItem("R-63 Diligence"),
                 newGameItem("R-63CS Diligence Counter Sniper"),
@@ -195,6 +205,7 @@ export function PopulateArmoryCache() {
                 newGameItem("P-34 Breacher", ["firearm"]),
                 newGameItem("P-35 Re-Educator", ["firearm"]),
                 newGameItem("P-4 Senator", ["firearm"]),
+                newGameItem("P-44 Mist", ["firearm"]),
                 newGameItem("P-72 Crisper", ["firearm"]),
                 newGameItem("P-92 Warrant", ["firearm"]),
                 newGameItem("P/40-K Bolt Pistol", ["firearm"]),
@@ -204,6 +215,7 @@ export function PopulateArmoryCache() {
             grenade: [
                 newGameItem("G-10 Incendiary", ["incendiary", "explosive"]),
                 newGameItem("G-109 Urchin", ["sticky", "stun"]),
+                newGameItem("G-11 Caltrops", ["stun"]),
                 newGameItem("G-12 High Explosive", ["heavy-armor-penetrating", "explosive"], true, true),
                 newGameItem("G-123 Thermite", ["anti-tank", "sticky"]),
                 newGameItem("G-13 Incendiary Impact", ["incendiary", "explosive"]),
@@ -282,9 +294,11 @@ export function PopulateArmoryCache() {
                 newGameItem("SH-20 Ballistic Shield Backpack", ["backpack", "supply", "hellpod"]),
                 newGameItem("SH-32 Shield Generator Pack", ["backpack", "supply", "hellpod"]),
                 newGameItem("SH-51 Directional Shield", ["backpack", "supply", "hellpod"]),
+                newGameItem("TD-110 Maelstrom", ["vehicle", "supply", "heavy-armor-penetrating", "anti-tank"]),
                 newGameItem("TD-220 Bastion MK XVI", ["vehicle", "supply", "explosive", "anti-tank", "heavy-armor-penetrating"]),
                 newGameItem("40-K Meltagun", ["support-weapon", "supply", "chargeup", "anti-tank"]),
                 newGameItem("AC-8 Autocannon", ["support-weapon", "supply", "backpack", "heavy-armor-penetrating", "stationary-reload"]),
+                newGameItem("AMW-20 Apex", ["support-weapon", "supply", "backpack", "heavy-armor-penetrating", "stationary-reload"]),
                 newGameItem("APW-1 Anti-Materiel Rifle", ["support-weapon", "supply", "heavy-armor-penetrating"]),
                 newGameItem("ARC-3 Arc Thrower", ["support-weapon", "supply", "anti-tank", "chargeup", "arc"]),
                 newGameItem("B/FLAM-80 Cremator", ["support-weapon", "supply", "hellpod", "backpack", "incendiary"]),
@@ -300,6 +314,8 @@ export function PopulateArmoryCache() {
                 newGameItem("GL-21 Grenade Launcher", ["support-weapon", "supply", "explosive", "medium-armor-penetrating"]),
                 newGameItem("GL-28 Belt-Fed Grenade Launcher", ["support-weapon", "supply", "backpack", "heavy-armor-penetrating", "explosive"]),
                 newGameItem("GL-52 De-Escalator", ["support-weapon", "supply", "explosive", "heavy-armor-penetrating", "arc"]),
+                newGameItem("GR-8 Recoilless Rifle", ["support-weapon", "supply", "backpack", "anti-tank", "stationary-reload"]),
+                newGameItem("LAS-44 Nova", ["support-weapon", "supply", "anti-tank", "heat"]),
                 newGameItem("LAS-98 Laser Cannon", ["support-weapon", "supply", "hellpod", "heavy-armor-penetrating", "heat", "beam"]),
                 newGameItem("LAS-99 Quasar Cannon", ["support-weapon", "supply", "anti-tank", "chargeup"]),
                 newGameItem("M-1000 Maxigun", ["support-weapon", "supply", "medium-armor-penetrating", "backpack"]),
@@ -326,15 +342,15 @@ export function PopulateArmoryCache() {
                 newGameItem("Experimental Infusion", ["booster"]),
                 newGameItem("Expert Extraction Pilot", ["booster"]),
                 newGameItem("Firebomb Hellpods", ["booster"]),
-                newGameItem("Flexible Reinforcement Budget", ["booster"]),
+                newGameItem("Flexible Reinforcement Budget", ["booster"], false, false, true),
                 newGameItem("Hellpod Space Optimization", ["booster"]),
-                newGameItem("Increased Reinforcement Budget", ["booster"]),
+                newGameItem("Increased Reinforcement Budget", ["booster"], false, false, true),
                 newGameItem("Integrated Extinguishers", ["booster"]),
                 newGameItem("Localization Confusion", ["booster"]),
                 newGameItem("Motivational Shocks", ["booster"]),
                 newGameItem("Muscle Enhancement", ["booster"]),
-                newGameItem("Sample Extricator", ["booster"]),
-                newGameItem("Sample Scanner", ["booster"]),
+                newGameItem("Sample Extricator", ["booster"], false, false, true),
+                newGameItem("Sample Scanner", ["booster"], false, false, true),
                 newGameItem("Stamina Enhancement", ["booster"]),
                 newGameItem("Stun Pods", ["booster"]),
                 newGameItem("Surplus EAT Allocation", ["booster"]),

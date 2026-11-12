@@ -34,6 +34,7 @@ export type Keyword =
     | "integrated-explosives"
     | "acclimated"
     | "siege-ready"
+    | "stationary-shroud"
     | "unflinching"
     | "advanced-filtration"
     | "inflammable"
@@ -135,30 +136,46 @@ export interface GameItem {
     available: boolean;     // If the player has unlocked the item in-game.
     locked: boolean;        // Used to prevent removing starting gear from the armory.
     keywords?: Keyword[];   // List of keywords for filtering ease.
+    disabled?: boolean;     // Set in the catalog for items with no effect on a Roguedivers run - never offered by any pick.
 }
 
-export function newGameItem(name:string, 
+export function newGameItem(name:string,
     keywords: Keyword[] = [],
-    available: boolean = false, 
-    locked: boolean = false)
+    available: boolean = false,
+    locked: boolean = false,
+    disabled: boolean = false)
     : GameItem
 {
     return {
         name,
         available,
         locked,
-        keywords
+        keywords,
+        disabled
     };
+}
+
+// Whether an item can be offered by any pick - wheels, grants, rerolls, or a manual loadout change.
+export function isPickable(item: GameItem): boolean {
+    return item.available && !item.disabled;
 }
 
 export interface ArmoryCache {
     dataTimeStamp: number   // epoch ms
+    catalogVersion?: string // CATALOG_VERSION this was built from; missing on saves made before versioning
     cacheData: Record<ItemCategory, GameItem[]>
 }
 
 export interface ArmoryData {
     dataTimeStamp: number   // epoch ms
+    catalogVersion?: string // CATALOG_VERSION this was built from; missing on saves made before versioning
     data: Record<ItemCategory, Map<string, GameItem>>
+}
+
+// Shown once after a saved Armory is automatically brought up to a newer catalog.
+export interface CatalogUpdate {
+    version: string;        // the catalog version the save was updated to
+    newItems: number;       // items in the catalog that weren't in the save
 }
 
 export interface PlayerData {

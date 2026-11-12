@@ -1,15 +1,9 @@
-import type { ArmoryStatus, ArmoryData, ArmoryCache, ItemCategory, GameItem, Keyword } from "../types/Objects"
+import type { ArmoryStatus, ArmoryData, ArmoryCache, ItemCategory, GameItem, Keyword, CatalogUpdate } from "../types/Objects"
 import { newGameItem } from "../types/Objects"
 import { useState, useEffect } from "react"
-import { PopulateArmoryCache } from "./ArmoryBackup"
+import { PopulateArmoryCache, CATALOG_VERSION } from "./ArmoryBackup"
 
 const CACHE_KEY = "Roguedivers2Cache";
-const CACHE_TTL = 
-    1000    // 1K ms
-    * 60    // 60 s
-    * 60    // 60 m
-    * 24    // 24 h
-    * 1     //  1 d
 
 export function formatArmorPassive(passive: Keyword): string {
     return passive
@@ -44,6 +38,7 @@ function buildArmoryData(cache: ArmoryCache)
 {
     const armory:ArmoryData = {
         dataTimeStamp: cache.dataTimeStamp,
+        catalogVersion: cache.catalogVersion,
         data: {} as Record<ItemCategory, Map<string, GameItem>>
     };
 
@@ -65,8 +60,18 @@ function buildArmoryCache(armory: ArmoryData)
 
     return {
         dataTimeStamp: armory.dataTimeStamp,
+        catalogVersion: armory.catalogVersion,
         cacheData: cache
     }
+}
+
+// How many items the merged armory has that the old save didn't - shown in the update notice.
+function countNewItems(before: ArmoryData, after: ArmoryData): number {
+    let count = 0;
+    for (const [category, itemMap] of Object.entries(after.data) as [ItemCategory, Map<string, GameItem>][])
+        for (const name of itemMap.keys())
+            if (!before.data[category]?.has(name)) count++;
+    return count;
 }
 
 // merge existing armory data with fresh cache data.
@@ -76,6 +81,7 @@ export function mergeArmoryData(liveData: ArmoryData, newData: ArmoryCache)
     // merge new items from newData into liveData
     const merged:ArmoryData = {
         dataTimeStamp: newData.dataTimeStamp,
+        catalogVersion: newData.catalogVersion,
         data: {} as Record<ItemCategory, Map<string, GameItem>>
     }
 
@@ -88,7 +94,8 @@ export function mergeArmoryData(liveData: ArmoryData, newData: ArmoryCache)
                     newItem.name,
                     newItem.keywords,
                     liveData.data[category]?.get(newItem.name)?.available ?? newItem.available,
-                    newItem.locked)]))
+                    newItem.locked,
+                    newItem.disabled)]))
     }
     
     return merged;
@@ -100,6 +107,7 @@ export function useArmory() {
         data: {} as Record<ItemCategory, Map<string, GameItem>>
     });
     const [status, setStatus] = useState<ArmoryStatus>("loading");
+    const [catalogUpdate, setCatalogUpdate] = useState<CatalogUpdate | null>(null);
 
     // load once on mount
     useEffect(() => {
@@ -108,47 +116,53 @@ export function useArmory() {
             let cached: ArmoryCache | null = null;
             try {
                 cached = cachedRaw ? JSON.parse(cachedRaw) : null;
-            } 
+            }
             catch (error) {
                 console.error("Error parsing cached armory data:", error);
             }
 
-            let liveData: ArmoryData | null = null;
-            if (cached)
-            {
-                liveData = buildArmoryData(cached);
-                setArmory(liveData);
-                setStatus("cached");
+            // Saved Armory already matches the bundled catalog - use it as-is.
+            if (cached && cached.catalogVersion === CATALOG_VERSION) {
+                setArmory(buildArmoryData(cached));
+                setStatus("fresh");
+                return;
             }
 
-            // check if data is stale and refresh if needed.
-            const isStale = !cached || Date.now() - cached.dataTimeStamp > CACHE_TTL;
-            if (isStale)
-                try {
-                    setStatus("loading");
-                    const fresh = PopulateArmoryCache();
-
-                    if (fresh) {
-                        // merge, never overwrite - preserves every available/locked toggle already made.
-                        const merged = liveData ? mergeArmoryData(liveData, fresh) : buildArmoryData(fresh);
-                        setArmory(merged);
-                        localStorage.setItem(CACHE_KEY, JSON.stringify(buildArmoryCache(merged)))
-                        setStatus("fresh");
-                    }
-                }
-                catch (error) {
-                    setStatus(cached ? "cached" : "error")
-                    console.error(error)
-                }
-            else
+            // No save yet, or one built from a different catalog version (including saves from before
+            // versioning existed): merge with the current catalog, never overwrite - preserves every
+            // available toggle already made.
+            const liveData = cached ? buildArmoryData(cached) : null;
+            try {
+                const fresh = PopulateArmoryCache();
+                const merged = liveData ? mergeArmoryData(liveData, fresh) : buildArmoryData(fresh);
+                setArmory(merged);
+                localStorage.setItem(CACHE_KEY, JSON.stringify(buildArmoryCache(merged)));
                 setStatus("fresh");
+                // A first visit has nothing to have been updated, so only existing saves get the notice.
+                if (liveData)
+                    setCatalogUpdate({ version: CATALOG_VERSION, newItems: countNewItems(liveData, merged) });
+            }
+            catch (error) {
+                console.error(error);
+                // Fall back to the outdated save rather than showing nothing.
+                if (liveData) {
+                    setArmory(liveData);
+                    setStatus("cached");
+                }
+                else setStatus("error");
+            }
         }
 
         loadData()
     }, []);
 
+    function dismissCatalogUpdate() {
+        setCatalogUpdate(null);
+    }
+
     // Manually force a refresh against the (possibly updated) static catalog - e.g. after a new
-    // Warbond's items have been added to ArmoryBackup.ts, without waiting for the 24h TTL.
+    // Warbond's items have been added to ArmoryBackup.ts. Loads already merge automatically when
+    // CATALOG_VERSION changes; this is the escape hatch if a catalog edit forgot to bump it.
     function refreshArmory() {
         try {
             setStatus("loading");
@@ -178,7 +192,7 @@ export function useArmory() {
             updatedCategory.set(name, {...item, available: !item.available});
 
             const next: ArmoryData = {
-                dataTimeStamp: prev.dataTimeStamp,
+                ...prev,
                 data: {...prev.data, [category]: updatedCategory}
             };
 
@@ -201,7 +215,7 @@ export function useArmory() {
             }
 
             const next: ArmoryData = {
-                dataTimeStamp: prev.dataTimeStamp,
+                ...prev,
                 data: nextData
             };
 
@@ -224,7 +238,7 @@ export function useArmory() {
             }
 
             const next: ArmoryData = {
-                dataTimeStamp: prev.dataTimeStamp,
+                ...prev,
                 data: nextData
             };
 
@@ -236,6 +250,8 @@ export function useArmory() {
     return {
         armory,
         status,
+        catalogUpdate,
+        dismissCatalogUpdate,
         toggleItemAvailable,
         refreshArmory,
         selectAllItems,

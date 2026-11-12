@@ -1,4 +1,5 @@
 import type { ArmoryData, ItemCategory, Keyword, LoadoutPackage, GrantValue, PlayerData } from "../types/Objects";
+import { isPickable } from "../types/Objects";
 import { formatArmorName } from "./Armory";
 import { TEAM_MILESTONES } from "./TeamMilestones";
 
@@ -33,7 +34,7 @@ function getUnlockedItems(armory: ArmoryData, categories: ItemCategory[]): strin
     const names: string[] = [];
     for (const category of categories)
         for (const item of armory.data[category]?.values() ?? [])
-            if (item.available) names.push(item.name);
+            if (isPickable(item)) names.push(item.name);
     return names.sort((a, b) => a.localeCompare(b));
 }
 
@@ -58,7 +59,7 @@ export function resolveGrantOptions(value: GrantValue, armory: ArmoryData, field
         const options: string[] = [];
         for (const category of categories)
             for (const item of armory.data[category]?.values() ?? [])
-                if (item.available && matchesKeywords(item.keywords, value.keywords, value.filterMode))
+                if (isPickable(item) && matchesKeywords(item.keywords, value.keywords, value.filterMode))
                     options.push(item.name);
         return options.sort((a, b) => a.localeCompare(b));
     }
@@ -71,7 +72,7 @@ export function resolveGrantOptions(value: GrantValue, armory: ArmoryData, field
     const options: string[] = [];
     for (const category of categories)
         for (const item of armory.data[category]?.values() ?? [])
-            if (item.available && item.keywords?.includes(value as Keyword))
+            if (isPickable(item) && item.keywords?.includes(value as Keyword))
                 options.push(item.name);
     return options.sort((a, b) => a.localeCompare(b));
 }
@@ -208,7 +209,7 @@ export function rollFieldValue(field: keyof PlayerData, armory: ArmoryData, play
     const pool: string[] = [];
     for (const category of categories)
         for (const item of armory.data[category]?.values() ?? [])
-            if (item.available && !avoid.has(item.name)) pool.push(item.name);
+            if (isPickable(item) && !avoid.has(item.name)) pool.push(item.name);
     if (pool.length === 0) return "";
     return pool[Math.floor(Math.random() * pool.length)];
 }

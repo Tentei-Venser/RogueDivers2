@@ -1,6 +1,6 @@
 import './Roguedivers.css'
 import { useArmory } from './data/Armory'
-import { ArmoryView } from './components/Armory/ArmoryView'
+import { ArmoryView, CatalogUpdateNotice } from './components/Armory/ArmoryView'
 import { usePlayer } from './data/Player'
 import { PlayerView } from './components/Player/PlayerView'
 import { MilestonePicker } from './components/Player/MilestonePicker'
@@ -21,6 +21,8 @@ function App() {
     return (
         <div>
             <h1>Roguedivers II Companion App</h1>
+            {armory.catalogUpdate &&
+                <CatalogUpdateNotice update={armory.catalogUpdate} onDismiss={armory.dismissCatalogUpdate} />}
             {armory.status === "loading" && <p>Loading armory...</p>}
             {armory.status === "error" && <p>Failed to load armory data.</p>}
             {(armory.status === "fresh" || armory.status === "cached") 
