@@ -8,7 +8,7 @@ export interface SaveData {
     dataVersion: string;
     commitSha: string;
     armoryDataVersion: string;
-    exportedAt: Date;
+    exportedAt: string;     // ISO 8601 (UTC) - JSON has no Date type, so this is what the file holds
     player: PlayerData;
     unlocked: Partial<Record<ItemCategory, string[]>>;
 }
@@ -26,25 +26,27 @@ function buildSaveData(player: PlayerData, armory: ArmoryData): SaveData {
         dataVersion: __DATA_VERSION__,
         commitSha: __COMMIT_SHA__,
         armoryDataVersion: armory.catalogVersion ?? "unknown",
-        exportedAt: new Date(), 
+        exportedAt: new Date().toISOString(),
         player, 
         unlocked
     };
 }
 
 function downloadSaveData(saveData: SaveData) {
-    const year = saveData.exportedAt.getFullYear();
-    const month = String(saveData.exportedAt.getMonth() + 1).padStart(2, "0");
-    const day = String(saveData.exportedAt.getDate()).padStart(2, "0");
-    const hour = String(saveData.exportedAt.getHours()).padStart(2, "0");
-    const minute = String(saveData.exportedAt.getMinutes()).padStart(2, "0");
-    const second = String(saveData.exportedAt.getSeconds()).padStart(2, "0");
+    // Filename uses the local date/time of the same instant stored in exportedAt.
+    const exportedAt = new Date(saveData.exportedAt);
+    const year = exportedAt.getFullYear();
+    const month = String(exportedAt.getMonth() + 1).padStart(2, "0");
+    const day = String(exportedAt.getDate()).padStart(2, "0");
+    const hour = String(exportedAt.getHours()).padStart(2, "0");
+    const minute = String(exportedAt.getMinutes()).padStart(2, "0");
+    const second = String(exportedAt.getSeconds()).padStart(2, "0");
     
     const blob = new Blob([JSON.stringify(saveData, null, 2)], {type: "application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Roguedivers2_SaveData_${year}-${month}-${day}_${hour}-${minute}-${second}_Z.json`;
+    a.download = `Roguedivers2_SaveData_${year}-${month}-${day}_${hour}-${minute}-${second}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
 }
