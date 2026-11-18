@@ -1,16 +1,10 @@
 import { useRef, useState } from "react";
-import type { ArmoryData, ItemCategory, PlayerRow, PlayerData, LoadoutPackage } from "../../types/Objects";
+import type { ArmoryData, ItemCategory, PlayerRow, PlayerData, LoadoutPackage, PlayerViewProps } from "../../types/Objects";
 import { isPickable } from "../../types/Objects";
 import { describePackageEffects } from "../../data/Milestones";
 import { formatArmorName, formatArmorKeywords } from "../../data/Armory";
 import { FactionTracker } from "./FactionTracker";
 import "./PlayerView.css"
-
-interface PlayerViewProps {
-    player:PlayerData,
-    armory:ArmoryData,
-    onUpdate: (patch: Partial<PlayerData>) => void
-}
 
 function getUnlockedItems(armory: ArmoryData, categories: ItemCategory[])
     : string[] {

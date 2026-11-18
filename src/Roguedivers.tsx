@@ -8,16 +8,13 @@ import { DeathFlow } from './components/Player/DeathFlow'
 import { MissionResults } from './components/Player/MissionResults'
 import { MissionHistoryLog } from './components/Player/MissionHistoryLog'
 import { QuickstartView } from './components/Player/QuickstartView'
-import type { ArmoryData } from './types/Objects'
+import type { ArmoryData, ItemCategory } from './types/Objects'
 import { useState } from 'react'
 import { useTheme, type Theme } from './data/useTheme'
+import { handleExport, handleImport } from './data/SaveData'
 
 const NEXT_THEME: Record<Theme, Theme> = { system: "light", light: "dark", dark: "system" };
 const THEME_LABEL: Record<Theme, string> = { system: "Theme: Auto", light: "Theme: Light", dark: "Theme: Dark" };
-
-declare const __APP_VERSION__: string
-declare const __DATA_VERSION__: string
-declare const __COMMIT_SHA__: string
 
 function App() {
 
@@ -31,7 +28,7 @@ function App() {
             {armory.status === "error" && <p>Failed to load armory data.</p>}
             {(armory.status === "fresh" || armory.status === "cached") 
                 && <>
-                    <PlayerSection armory={armory.armory} />
+                    <PlayerSection armory={armory.armory} replaceArmory={armory.replaceArmory} />
                     <ArmoryView armory={armory.armory} 
                         onToggle={armory.toggleItemAvailable} 
                         onRefresh={armory.refreshArmory} 
@@ -73,12 +70,23 @@ function BuildInfo() {
             <span>{versionInfo}</span>
             <button className="starting-armor-button" type="button" onClick={copyVersionInfo}>Copy version info</button>
             <span className="build-info-status" aria-live="polite">{copied ? "Copied" : ""}</span>
+            <button className="starting-armor-button" 
+                type="button" 
+                onClick={() => window.open("https://docs.google.com/forms/d/e/1FAIpQLSeT9YhT0hH-_AqpegCQ_6Kf50EveVwBUeuXrO93VxD1KO6cvw/viewform", 
+                                            "_blank", 
+                                            "noopener noreferrer")}>
+                Provide Feedback
+            </button>
             <ThemeButton />
         </footer>
     )
 }
 
-function PlayerSection({armory}: {armory:ArmoryData}){
+function PlayerSection({armory, replaceArmory}: 
+    {
+        armory:ArmoryData, 
+        replaceArmory: (newArmory: Map<ItemCategory, string[]>) => void
+    }){
     const player = usePlayer();
 
     return (
@@ -89,7 +97,10 @@ function PlayerSection({armory}: {armory:ArmoryData}){
                 && <>
                     <div className="player-panels">
                         <PlayerView player={player.player} armory={armory} onUpdate={player.updatePlayer}/>
-                        <QuickstartView />
+                        <QuickstartView 
+                            onExport={() => handleExport(player.player, armory)}
+                            onImport={() => handleImport(player.updatePlayer, replaceArmory)}
+                        />
                     </div>
                     <MissionResults player={player.player} armory={armory} onUpdate={player.updatePlayer}/>
                     <MissionHistoryLog player={player.player}/>

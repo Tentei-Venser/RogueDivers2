@@ -1,7 +1,20 @@
-export function QuickstartView() {
+export function QuickstartView({ onExport, onImport} : {
+    onExport: () => void;
+    onImport: () => void;
+}) {
     return (
         <section className="quickstart-panel" aria-labelledby="quickstart-heading">
             <h2 id="quickstart-heading">Quick Start</h2>
+            <button className="starting-armor-button" 
+                type="button"
+                onClick={onExport}>
+                Export Save Data
+            </button>
+            <button className="starting-armor-button" 
+                type="button"
+                onClick={onImport}>
+                Import Save Data
+            </button>
             <ol className="quickstart-list">
                 <li><strong>Mark unlocked gear.</strong> Check items you own in the Armory below so they can be selected as grants and loot.</li>
                 <li><strong>Log mission results below.</strong> Mark completed objectives to earn loot spins; completing the operation advances difficulty. If your diver dies but your squad extracts, check the "My Diver Died" option here. Extracted with a weapon you found in the mission? Select it here to add it to your loadout.</li>

@@ -119,6 +119,12 @@ export interface TeamMilestone {
     requisitionChoices: number;     // Count of allowed requisitions for the Diver.
 }
 
+export interface PlayerViewProps {
+    player:PlayerData,
+    armory:ArmoryData,
+    onUpdate: (patch: Partial<PlayerData>) => void
+}
+
 export type DeathOutcome = "squad-wiped" | "squad-extracted"
 
 export interface MissionResult {
@@ -140,6 +146,11 @@ export interface GameItem {
     disabled?: boolean;     // Set in the catalog for items with no effect on a Roguedivers run - never offered by any pick.
     foundInMission?: boolean; // Can be picked up during a mission; extracting with it lets the Diver equip it.
     pickupName?: string;    // In-mission name, when the pickup isn't itself an Armory item but maps to this one.
+}
+
+export interface RestoredSave {
+    player: PlayerData;
+    armory: Map<ItemCategory, string[]>;
 }
 
 // Optional flags for newGameItem - everything except name and keywords defaults to off.

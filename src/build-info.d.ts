@@ -1,0 +1,3 @@
+declare const __APP_VERSION__: string
+declare const __DATA_VERSION__: string
+declare const __COMMIT_SHA__: string

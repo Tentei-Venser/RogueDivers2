@@ -154,6 +154,25 @@ export function useArmory() {
         loadData()
     }, []);
 
+    // Replace the entire armory with a new set of unlocked items, preserving availability of locked items.
+    function replaceArmory(saveData: Map<ItemCategory, string[]>) {
+        setArmory(prev => {
+            const newData = {} as Record<ItemCategory, Map<string, GameItem>>;
+            for (const [category, itemMap] of Object.entries(prev.data) as [ItemCategory, Map<string, GameItem>][]) {
+                const unlockedNames = new Set(saveData.get(category) ?? []);
+                const updated = new Map(itemMap);
+                for (const [name, item] of itemMap) {
+                    if (item.locked) continue;
+                    updated.set(name, {...item, available: unlockedNames.has(name)});
+                }
+                newData[category] = updated;
+            }
+            const next = { ...prev, data:newData, dataTimeStamp: Date.now() };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(buildArmoryCache(next)));
+            return next;
+        });
+    }
+
     function dismissCatalogUpdate() {
         setCatalogUpdate(null);
     }
@@ -253,6 +272,7 @@ export function useArmory() {
         toggleItemAvailable,
         refreshArmory,
         selectAllItems,
-        deselectAllItems
+        deselectAllItems,
+        replaceArmory
     };
 }

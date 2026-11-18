@@ -2,6 +2,23 @@
 
 All notable changes to the Roguedivers II Companion App are recorded here, newest first. Every push to `main` deploys to GitHub Pages, so each section is dated by the day it went live.
 
+## 2026-11-17
+
+### Added
+- **Export and import save data.** Two new buttons in the Quick Start panel.
+  - **Export Save Data** downloads a `.json` file with your Diver (loadout, level, faction, Specialization, Requisitions and Mission History) and every item checked in your Armory. The filename includes your local date and time, so backups sort in order and don't overwrite each other.
+  - **Import Save Data** loads one of those files, after asking you to confirm, and replaces your current Diver and Armory checklist. Use it to move a run to another browser or device, or to keep a backup.
+  - Imports work across catalog updates. Items that no longer exist are skipped, and items added since the export stay unchecked. Locked starting gear is never changed.
+  - A file that isn't a valid save, or that was made by a newer version of the app, is rejected and nothing changes.
+- **Provide Feedback** button in the footer, which opens the feedback form in a new tab.
+
+### Developer
+- Save files carry `saveDataVersion`, plus the app version, data version, commit and catalog version they were exported from, for future migrations and bug reports.
+- New `src/data/SaveData.ts` with export and import. Imports are checked fully before anything is applied. Wrong-typed player fields fall back to the defaults, and unlock lists are filtered to strings.
+- New `replaceArmory` in `useArmory`, which sets the checked items from a list of names.
+- The `__APP_VERSION__`, `__DATA_VERSION__` and `__COMMIT_SHA__` declarations moved to `src/build-info.d.ts` so any module can use them.
+- `PlayerViewProps` moved to `types/Objects.ts`.
+
 ## 2026-11-12
 
 ### Added
